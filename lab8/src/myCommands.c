@@ -39,7 +39,7 @@ portBASE_TYPE prvTaskStatsCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen
 void register_commands( void )
 {
     if( FreeRTOS_CLIRegisterCommand( &xTaskStatsCommand ) == pdFAIL
-     || 1 )
+     || 0 )
     {
         // error registering commands
         while( 1 );

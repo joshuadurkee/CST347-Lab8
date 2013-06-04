@@ -15,3 +15,8 @@
 *.exe
 *.out
 *.app
+
+lab8/dist/*
+lab8/build/*
+lab8/nbproject/*
+lab8/Makefile

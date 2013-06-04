@@ -86,7 +86,7 @@
 
 // elevator movement
 #define ACCEL_FPSS_DFLT     2
-#define MAX_SPEED_FPS       40
+#define MAX_SPEED_FPS_DFLT  40
 
 // elevator positions
 #define GD_FLOOR_POS        0
@@ -128,7 +128,6 @@ void pollButtonControlTask( void *params );
 void ledControlTask( void *params );
 void txControlTask( void *params );
 void rxControlTask( void *params );
-void register_commands( void );
 void msDelay( int ms );
 int poll_buttons( void );
 portBASE_TYPE prvTaskStatsCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
