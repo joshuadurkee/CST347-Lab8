@@ -137,4 +137,8 @@ interrupts. */
 #define configMAX_SYSCALL_INTERRUPT_PRIORITY	0x03
 
 
+/* Necessary defines for configGENERATE_RUN_TIME_STATS to work */
+//#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() Timer_GetRunTime_OnInterrupt()
+//#define portGET_RUN_TIME_COUNTER_VALUE () ulHighFrequencyTimerTicks
+
 #endif /* FREERTOS_CONFIG_H */
