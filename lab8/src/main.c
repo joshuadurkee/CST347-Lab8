@@ -231,8 +231,9 @@ static void prv_setup_hardware( void )
     CLEAR_BITS( DOOR_LED_0 );
     CLEAR_BITS( DOOR_LED_1 );
     CLEAR_BITS( DOOR_LED_2 );
-    CLEAR_BITS( UP_LED );
-    CLEAR_BITS( DOWN_LED );
+    // LEDs off (set/clear inverted for port B?)
+    SET_BITS( UP_LED );
+    SET_BITS( DOWN_LED );
 
     // LEDs are outputs
     SET_DIGITAL_OUT( DOOR_LED_0 );

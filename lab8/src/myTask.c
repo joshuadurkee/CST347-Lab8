@@ -284,6 +284,22 @@ void send_movement_status( float distance_f, float speed_fps )
 
 void update_elevator_leds( elevator_movement_t led_state )
 {
-
-
+    switch( led_state )
+    {
+        case UP:
+            // up LED off, down LED on (set/clear inverted for port B?)
+            SET_BITS( UP_LED );
+            CLEAR_BITS( DOWN_LED );
+            break;
+        case DOWN:
+            // up LED on, down LED off
+            CLEAR_BITS( UP_LED );
+            SET_BITS( DOWN_LED );
+            break;
+        case STOP:
+            // LEDs off
+            SET_BITS( UP_LED );
+            SET_BITS( DOWN_LED );
+            break;
+    }
 }

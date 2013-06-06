@@ -79,9 +79,9 @@
 #define DOOR_LED_1_PORT     D
 #define DOOR_LED_2_BIT      BIT_2
 #define DOOR_LED_2_PORT     D
-#define UP_LED_BIT          BIT_4
+#define UP_LED_BIT          BIT_5
 #define UP_LED_PORT         B
-#define DOWN_LED_BIT        BIT_5
+#define DOWN_LED_BIT        BIT_4
 #define DOWN_LED_PORT       B
 
 // elevator movement
