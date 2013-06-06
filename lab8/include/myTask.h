@@ -122,15 +122,40 @@ typedef struct
 } task_parameter_t;
 
 
+// enumerated types
+typedef enum
+{
+    GD,                         /* ground floor                               */
+    P1,                         /* penthouse 1                                */
+    P2                          /* penthouse 2                                */
+} floor_t;
+
+
+typedef enum
+{
+    UP,                         /* elevator moving up                         */
+    DOWN,                       /* elevator moving down                       */
+    STOP                        /* elevator is stopped                        */
+} elevator_movement_t;
+
+
+//
 // prototypes
+//
+
+// tasks
 void irqButtonControlTask( void *params );
 void pollButtonControlTask( void *params );
 void ledControlTask( void *params );
 void txControlTask( void *params );
 void rxControlTask( void *params );
+
+// helper functions
 void msDelay( int ms );
 int poll_buttons( void );
-portBASE_TYPE prvTaskStatsCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
+void send_elevator_status( floor_t destination_floor, bool is_moving );
+void send_movement_status( float distance_f, float speed_fps );
+void update_elevator_leds( elevator_movement_t led_state );
 
 
 #endif	/* MYTASK_H */

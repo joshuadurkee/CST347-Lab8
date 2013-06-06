@@ -224,3 +224,52 @@ int poll_buttons( void )
 
     return -1;
 }
+
+
+void send_elevator_status( floor_t destination_floor, bool is_moving )
+{
+    char movement_str[ 16 ];
+    char floor_str[ 8 ];
+    char msg[ MSG_SIZE ];
+
+    if( is_moving )
+        strcpy( movement_str, "Moving to" );
+    else
+        strcpy( movement_str, "Stopped at" );
+
+    switch( destination_floor )
+    {
+        case GD:
+            strcpy( floor_str, "GD" );
+            break;
+        case P1:
+            strcpy( floor_str, "P1" );
+            break;
+        case P2:
+            strcpy( floor_str, "P2" );
+            break;
+    }
+
+    // create message
+    sprintf( msg, "%s floor %s\r\n", movement_str, floor_str );
+    
+    xQueueSendToBack(
+                        tx_queue_handle,
+                        (void *) msg,
+                        QUEUE_WAIT_MS
+                    );
+}
+
+
+void send_movement_status( float distance_f, float speed_fps )
+{
+
+
+}
+
+
+void update_elevator_leds( elevator_movement_t led_state )
+{
+
+
+}
