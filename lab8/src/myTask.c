@@ -261,10 +261,24 @@ void send_elevator_status( floor_t destination_floor, bool is_moving )
 }
 
 
+// transmit elevator distance and speed status (prints integer values)
 void send_movement_status( float distance_f, float speed_fps )
 {
+    char distance_str[ 8 ];
+    char speed_str[ 8 ];
+    char msg[ MSG_SIZE ];
 
+    itoa( distance_str, (int)distance_f, 10 );
+    itoa( speed_str, (int)speed_fps, 10 );
 
+    // create message
+    sprintf( msg, "%s feet :: %s ft/s\r\n", distance_str, speed_str );
+
+    xQueueSendToBack(
+                        tx_queue_handle,
+                        (void *) msg,
+                        QUEUE_WAIT_MS
+                    );
 }
 
 
