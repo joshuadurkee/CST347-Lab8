@@ -140,13 +140,8 @@ void rxControlTask( void *params )
         // add the character to the command string, completing on carriage return
         if( rx_char == '\r' )
         {
-            // send characters to Tx queue to echo back end of the line entered by user
-            strcpy( rx_echo, "\r\n" );
-            xQueueSendToBack(
-                                tx_queue_handle,
-                                (void *) rx_echo,
-                                QUEUE_WAIT_MS
-                            );
+            // echo back end of the line entered by user
+            transmit_string( "\r\n" );
 
             command_string[ cmd_str_idx ] = '\0';
             cmd_str_idx = 0;
@@ -161,12 +156,7 @@ void rxControlTask( void *params )
         {
             // send character to Tx queue to echo back the character
             sprintf( rx_echo, "%c", rx_char );
-
-            xQueueSendToBack(
-                                tx_queue_handle,
-                                (void *) rx_echo,
-                                QUEUE_WAIT_MS
-                            );
+            transmit_string( rx_echo );
 
             command_string[ cmd_str_idx++ ] = rx_char;
         }
@@ -259,12 +249,7 @@ void send_elevator_status( floor_t destination_floor, bool is_moving )
 
     // create message
     sprintf( msg, "%s floor %s\r\n", movement_str, floor_str );
-    
-    xQueueSendToBack(
-                        tx_queue_handle,
-                        (void *) msg,
-                        QUEUE_WAIT_MS
-                    );
+    transmit_string( msg );
 }
 
 
@@ -280,12 +265,7 @@ void send_movement_status( float distance_f, float speed_fps )
 
     // create message
     sprintf( msg, "%s feet :: %s ft/s\r\n", distance_str, speed_str );
-
-    xQueueSendToBack(
-                        tx_queue_handle,
-                        (void *) msg,
-                        QUEUE_WAIT_MS
-                    );
+    transmit_string( msg );
 }
 
 
