@@ -153,6 +153,7 @@ void rxControlTask( void *params );
 // helper functions
 void msDelay( int ms );
 int poll_buttons( void );
+void transmit_string( char *tx_ptr );
 void send_elevator_status( floor_t destination_floor, bool is_moving );
 void send_movement_status( float distance_f, float speed_fps );
 void update_elevator_leds( elevator_movement_t led_state );

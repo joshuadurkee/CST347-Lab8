@@ -130,7 +130,6 @@ void rxControlTask( void *params )
     static int  cmd_str_idx = 0;
     static char pcOutputString[ configCOMMAND_INT_MAX_OUTPUT_SIZE ];
     char       *tx_ptr;
-    char        tx_buf[ MSG_SIZE ];
 
     while( 1 )
     {
@@ -156,28 +155,7 @@ void rxControlTask( void *params )
 
             tx_ptr = pcOutputString;
 
-            // transmit all but the last chunk
-            while( strlen( tx_ptr ) > MSG_SIZE )
-            {
-                strncpy( tx_buf, tx_ptr, MSG_SIZE - 1 );
-                // null terminate string
-                tx_buf[ MSG_SIZE - 1 ] = '\0';
-                xQueueSendToBack(
-                                    tx_queue_handle,
-                                    (void *) tx_buf,
-                                    QUEUE_WAIT_MS
-                                );
-
-                tx_ptr += (char)(MSG_SIZE - 1);
-            }
-
-            // transmit the remainder of the output string
-            strcpy( tx_buf, tx_ptr );
-            xQueueSendToBack(
-                                tx_queue_handle,
-                                (void *) tx_buf,
-                                QUEUE_WAIT_MS
-                            );
+            transmit_string( tx_ptr );
         }
         else
         {
@@ -223,6 +201,35 @@ int poll_buttons( void )
         return CLOSE_BUTTON_BIT;
 
     return -1;
+}
+
+
+void transmit_string( char *tx_ptr )
+{
+    char tx_buf[ MSG_SIZE ];
+
+    // transmit all but the last chunk
+    while( strlen( tx_ptr ) > MSG_SIZE )
+    {
+        strncpy( tx_buf, tx_ptr, MSG_SIZE - 1 );
+        // null terminate string
+        tx_buf[ MSG_SIZE - 1 ] = '\0';
+        xQueueSendToBack(
+                            tx_queue_handle,
+                            (void *) tx_buf,
+                            QUEUE_WAIT_MS
+                        );
+
+        tx_ptr += (char)(MSG_SIZE - 1);
+    }
+
+    // transmit the remainder of the output string
+    strcpy( tx_buf, tx_ptr );
+    xQueueSendToBack(
+                        tx_queue_handle,
+                        (void *) tx_buf,
+                        QUEUE_WAIT_MS
+                    );
 }
 
 
