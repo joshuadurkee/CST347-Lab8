@@ -64,13 +64,13 @@
 #define CLOSE_BUTTON_PORT   C
 
 // keyboard inputs
-#define GD_CALL_CHAR        "z"
-#define P1_CALL_DN_CHAR     "x"
-#define P1_CALL_UP_CHAR     "c"
-#define P2_CALL_CHAR        "v"
-#define EM_STOP_CHAR        "b"
-#define EM_CLR_CHAR_        "n"
-#define DOOR_INTF_CHAR      "m"
+#define GD_CALL_CHAR        'z'
+#define P1_CALL_DN_CHAR     'x'
+#define P1_CALL_UP_CHAR     'c'
+#define P2_CALL_CHAR        'v'
+#define EM_STOP_CHAR        'b'
+#define EM_CLR_CHAR_        'n'
+#define DOOR_INTF_CHAR      'm'
 
 // outputs
 #define DOOR_LED_0_BIT      BIT_0

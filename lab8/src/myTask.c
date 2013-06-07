@@ -137,28 +137,48 @@ void rxControlTask( void *params )
 
         rx_char = UARTGetChar();
 
-        // add the character to the command string, completing on carriage return
-        if( rx_char == '\r' )
+        switch( rx_char )
         {
-            // echo back end of the line entered by user
-            transmit_string( "\r\n" );
+            case GD_CALL_CHAR:
 
-            command_string[ cmd_str_idx ] = '\0';
-            cmd_str_idx = 0;
+                break;
+            case P1_CALL_DN_CHAR:
 
-            do
-            {
-                ret = FreeRTOS_CLIProcessCommand( command_string, pcOutputString, configCOMMAND_INT_MAX_OUTPUT_SIZE );
-                transmit_string( pcOutputString );
-            } while( ret == pdTRUE );
-        }
-        else
-        {
-            // send character to Tx queue to echo back the character
-            sprintf( rx_echo, "%c", rx_char );
-            transmit_string( rx_echo );
+                break;
+            case P1_CALL_UP_CHAR:
 
-            command_string[ cmd_str_idx++ ] = rx_char;
+                break;
+            case P2_CALL_CHAR:
+
+                break;
+            case EM_STOP_CHAR:
+
+                break;
+            case EM_CLR_CHAR_:
+
+                break;
+            case DOOR_INTF_CHAR:
+                
+                break;
+            case '\r':              /* complete command string on carriage return */
+                // echo back end of the line entered by user
+                transmit_string( "\r\n" );
+
+                command_string[ cmd_str_idx ] = '\0';
+                cmd_str_idx = 0;
+
+                do
+                {
+                    ret = FreeRTOS_CLIProcessCommand( command_string, pcOutputString, configCOMMAND_INT_MAX_OUTPUT_SIZE );
+                    transmit_string( pcOutputString );
+                } while( ret == pdTRUE );
+                break;
+            default:                /* add the character to the command string */
+                // send character to Tx queue to echo back the character
+                sprintf( rx_echo, "%c", rx_char );
+                transmit_string( rx_echo );
+
+                command_string[ cmd_str_idx++ ] = rx_char;
         }
 
         vTaskSuspend( rx_task_handle );
