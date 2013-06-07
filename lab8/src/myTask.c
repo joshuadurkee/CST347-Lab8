@@ -129,7 +129,7 @@ void rxControlTask( void *params )
     char        command_string[ MSG_SIZE ];
     static int  cmd_str_idx = 0;
     static char pcOutputString[ configCOMMAND_INT_MAX_OUTPUT_SIZE ];
-    char       *tx_ptr;
+    long        ret;
 
     while( 1 )
     {
@@ -145,12 +145,12 @@ void rxControlTask( void *params )
 
             command_string[ cmd_str_idx ] = '\0';
             cmd_str_idx = 0;
-            // TODO call FreeRTOS_CLIProcessCommand() repeatedly until it returns pdFALSE
-            FreeRTOS_CLIProcessCommand( command_string, pcOutputString, configCOMMAND_INT_MAX_OUTPUT_SIZE );
 
-            tx_ptr = pcOutputString;
-
-            transmit_string( tx_ptr );
+            do
+            {
+                ret = FreeRTOS_CLIProcessCommand( command_string, pcOutputString, configCOMMAND_INT_MAX_OUTPUT_SIZE );
+                transmit_string( pcOutputString );
+            } while( ret == pdTRUE );
         }
         else
         {
