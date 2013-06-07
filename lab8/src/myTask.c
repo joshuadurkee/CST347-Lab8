@@ -137,6 +137,10 @@ void rxControlTask( void *params )
 
         rx_char = UARTGetChar();
 
+        // echo back the character
+        sprintf( rx_echo, "%c", rx_char );
+        transmit_string( rx_echo );
+
         switch( rx_char )
         {
             case GD_CALL_CHAR:
@@ -162,7 +166,7 @@ void rxControlTask( void *params )
                 break;
             case '\r':              /* complete command string on carriage return */
                 // echo back end of the line entered by user
-                transmit_string( "\r\n" );
+                transmit_string( "\n" );
 
                 command_string[ cmd_str_idx ] = '\0';
                 cmd_str_idx = 0;
@@ -174,10 +178,6 @@ void rxControlTask( void *params )
                 } while( ret == pdTRUE );
                 break;
             default:                /* add the character to the command string */
-                // send character to Tx queue to echo back the character
-                sprintf( rx_echo, "%c", rx_char );
-                transmit_string( rx_echo );
-
                 command_string[ cmd_str_idx++ ] = rx_char;
         }
 
