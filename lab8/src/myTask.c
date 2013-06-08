@@ -393,12 +393,12 @@ bool close_door( void )
 }
 
 
-// return true if door closed successfully, otherwise return false
-bool operate_door( void )
+// open and close door (until close door succeeds)
+void operate_door( void )
 {
     open_door();
-
     ms_delay( DOOR_OPEN_DURATION_MS );
 
-    return close_door();
+    while( !close_door() )
+        ms_delay( DOOR_OPEN_DURATION_MS );
 }

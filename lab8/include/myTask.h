@@ -179,7 +179,7 @@ void set_elevator_up_down_leds( elevator_movement_t led_state );
 void set_door_leds( door_movement_t state );
 void open_door( void );
 bool close_door( void );
-bool operate_door( void );
+void operate_door( void );
 
 
 #endif	/* MYTASK_H */
