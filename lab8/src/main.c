@@ -176,7 +176,7 @@ int main(void)
     // create Tx control task
     xTaskCreate(
                     txControlTask,
-                    "Tx tsk",
+                    "Tx task",
                     configMINIMAL_STACK_SIZE,
                     NULL,
                     TX_TASK_PRIORITY,
@@ -186,7 +186,7 @@ int main(void)
     // create Rx control task
     xTaskCreate(
                     rxControlTask,
-                    "Rx tsk",
+                    "Rx task",
                     configMINIMAL_STACK_SIZE,
                     NULL,
                     RX_TASK_PRIORITY,
