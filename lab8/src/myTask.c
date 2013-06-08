@@ -409,9 +409,6 @@ void elevatorMoveTask ( void )
 {
     extern xQueueHandle elevator_move_queue_handle;
 
-    //To show that this task is running:
-    transmit_string( "Elevator move task running!\r\n" );
-
     while(1)
     {
     }
@@ -419,9 +416,6 @@ void elevatorMoveTask ( void )
 
 void motorControlTask( void )
 {
-    //To show that this task is running:
-    transmit_string( "Motor control task running!\r\n" );
-
     static motor_led_state_t state = LED3;
     extern float current_speed_fps;
     float motor_speed;
