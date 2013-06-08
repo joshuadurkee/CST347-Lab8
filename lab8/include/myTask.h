@@ -93,6 +93,14 @@
 #define P1_FLOOR_POS        500
 #define P2_FLOOR_POS        510
 
+// door movement
+#define DOOR_SEQUENCE_DURATION_MS \
+                            ( 1000 / portTICK_RATE_MS )
+#define DOOR_STATE_DURATION_MS \
+                            ( DOOR_SEQUENCE_DURATION_MS / NUM_DOOR_STATES )
+#define DOOR_OPEN_DURATION_MS \
+                            ( 5000 / portTICK_RATE_MS )
+
 
 //
 // macros
@@ -139,6 +147,17 @@ typedef enum
 } elevator_movement_t;
 
 
+typedef enum
+{
+    CLOSED,                     /* door is closed                             */
+    MOSTLY_CLOSED,              /* door is mostly closed                      */
+    MOSTLY_OPEN,                /* door is mostly open                        */
+    OPEN,                       /* door is open                               */
+
+    NUM_DOOR_STATES
+} door_movement_t;
+
+
 //
 // prototypes
 //
@@ -157,6 +176,10 @@ void transmit_string( char *tx_ptr );
 void send_elevator_status( floor_t destination_floor, bool is_moving );
 void send_movement_status( float distance_f, float speed_fps );
 void update_elevator_leds( elevator_movement_t led_state );
+void set_door_leds( door_movement_t state );
+void open_door( void );
+bool close_door( void );
+bool operate_door( void );
 
 
 #endif	/* MYTASK_H */

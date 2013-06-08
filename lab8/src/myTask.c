@@ -312,3 +312,93 @@ void update_elevator_leds( elevator_movement_t led_state )
             break;
     }
 }
+
+
+void set_door_leds( door_movement_t state )
+{
+    switch( state )
+    {
+        case CLOSED:
+            SET_BITS( DOOR_LED_0 );
+            SET_BITS( DOOR_LED_1 );
+            SET_BITS( DOOR_LED_2 );
+            break;
+        case MOSTLY_CLOSED:
+            SET_BITS( DOOR_LED_0 );
+            SET_BITS( DOOR_LED_1 );
+            CLEAR_BITS( DOOR_LED_2 );
+            break;
+        case MOSTLY_OPEN:
+            SET_BITS( DOOR_LED_0 );
+            CLEAR_BITS( DOOR_LED_1 );
+            CLEAR_BITS( DOOR_LED_2 );
+            break;
+        case OPEN:
+            CLEAR_BITS( DOOR_LED_0 );
+            CLEAR_BITS( DOOR_LED_1 );
+            CLEAR_BITS( DOOR_LED_2 );
+            break;
+    }
+}
+
+
+void open_door( void )
+{
+    set_door_leds( CLOSED );
+    msDelay( DOOR_STATE_DURATION_MS );
+
+    set_door_leds( MOSTLY_CLOSED );
+    msDelay( DOOR_STATE_DURATION_MS );
+
+    set_door_leds( MOSTLY_OPEN );
+    msDelay( DOOR_STATE_DURATION_MS );
+
+    set_door_leds( OPEN );
+    msDelay( DOOR_STATE_DURATION_MS );
+}
+
+
+// return true if door closed successfully, otherwise return false
+bool close_door( void )
+{
+    set_door_leds( OPEN );
+    msDelay( DOOR_STATE_DURATION_MS );
+
+    set_door_leds( MOSTLY_OPEN );
+    msDelay( DOOR_STATE_DURATION_MS );
+
+    set_door_leds( MOSTLY_CLOSED );
+    msDelay( DOOR_STATE_DURATION_MS );
+
+    // check for door interference
+    if( door_interference )
+    {
+        door_interference = false;
+
+        transmit_string( "Door interference closing door!\r\n" );
+
+        set_door_leds( MOSTLY_OPEN );
+        msDelay( DOOR_STATE_DURATION_MS );
+
+        set_door_leds( OPEN );
+        msDelay( DOOR_STATE_DURATION_MS );
+
+        return false;
+    }
+
+    set_door_leds( CLOSED );
+    msDelay( DOOR_STATE_DURATION_MS );
+
+    return true;
+}
+
+
+// return true if door closed successfully, otherwise return false
+bool operate_door( void )
+{
+    open_door();
+
+    msDelay( DOOR_OPEN_DURATION_MS );
+
+    return close_door();
+}
