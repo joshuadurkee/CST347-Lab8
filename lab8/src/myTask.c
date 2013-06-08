@@ -424,6 +424,7 @@ void motorControlTask( void )
 
     static motor_led_state_t state = LED3;
     extern float current_speed_fps;
+    float motor_speed;
 
     while (1)
     {
@@ -431,7 +432,14 @@ void motorControlTask( void )
         state = (state + MOTOR_CONTROL_LED_INCREMENT) % NUM_MOTOR_LED_STATES;
         if (current_speed_fps != 0)
         {
-            ms_delay(MOTOR_CONTROL_BASE_DELAY/(current_speed_fps-((int)current_speed_fps % MOTOR_CONTROL_DELAY_FACTOR)));
+            //protect against negative speeds
+            if (current_speed_fps > 0) { motor_speed = current_speed_fps; }
+            else                       { motor_speed = current_speed_fps * -1; }
+
+            //shave off one's digit to round down to factor of 10
+            motor_speed = motor_speed - ( ( int ) motor_speed % MOTOR_CONTROL_DELAY_FACTOR );
+
+            ms_delay( MOTOR_CONTROL_BASE_DELAY / motor_speed );
         }
         else
         {
