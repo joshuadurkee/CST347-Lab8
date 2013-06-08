@@ -61,7 +61,7 @@ portBASE_TYPE prvChangeMaximumSpeedCommand( int8_t *pcWriteBuffer, size_t xWrite
 
     max_speed_fps = atoi( pcParameter1 );
     
-    sprintf( pcWriteBuffer, "\0" );
+    sprintf( pcWriteBuffer, "Maximum speed changed to %d feet/sec.\r\n", max_speed_fps );
 
     return pdFALSE;
 }
@@ -93,7 +93,7 @@ portBASE_TYPE prvChangeAccelerationCommand( int8_t *pcWriteBuffer, size_t xWrite
 
     accel_fpss = atoi( pcParameter1 );
 
-    sprintf( pcWriteBuffer, "\0" );
+    sprintf( pcWriteBuffer, "Acceleration changed to %d feet/sec/sec.\r\n", accel_fpss );
 
     return pdFALSE;
 }
