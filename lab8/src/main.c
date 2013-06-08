@@ -108,6 +108,7 @@ convert a time in milliseconds into a time in ticks. */
 #define LED_TASK_PRIORITY           1
 #define TX_TASK_PRIORITY            1
 #define RX_TASK_PRIORITY            1
+#define ELEVATOR_MOVE_TASK_PRIORITY 1
 
 // variables
 xTaskHandle irq_button_task_handle;
@@ -115,9 +116,11 @@ xTaskHandle poll_button_task_handle;
 xTaskHandle led_task_handle[ NUM_LEDS ];
 xTaskHandle tx_task_handle;
 xTaskHandle rx_task_handle;
+xTaskHandle elevator_move_task_handle;
 
 xQueueHandle led_queue_handle[ NUM_LEDS ];
 xQueueHandle tx_queue_handle;
+xQueueHandle elevator_move_queue_handle;
 
 xSemaphoreHandle buttonPress;
 xSemaphoreHandle ledNAction[ NUM_LEDS ];
@@ -193,6 +196,16 @@ int main(void)
                     &rx_task_handle
                );
 
+    // create Elevator Move task
+    xTaskCreate(
+                    elevatorMoveTask,
+                    "Elevator Move task",
+                    configMINIMAL_STACK_SIZE,
+                    NULL,
+                    ELEVATOR_MOVE_TASK_PRIORITY,
+                    &elevator_move_task_handle
+               );
+
     // create binary semaphores which are safe to call with xSemaphoreGiveFromISR()
     vSemaphoreCreateBinary( buttonPress );
     vSemaphoreCreateBinary( ledNAction[ 0 ] );
@@ -210,6 +223,9 @@ int main(void)
 
     // initialize Tx queue
     tx_queue_handle = xQueueCreate( TX_QUEUE_DEPTH, TX_QUEUE_SIZE );
+
+    // initialize elevator move queue
+    elevator_move_queue_handle = xQueueCreate( ELEVATOR_MOVE_QUEUE_DEPTH, ELEVATOR_MOVE_QUEUE_SIZE );
 
     // register commands
     register_commands();

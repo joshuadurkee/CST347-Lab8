@@ -42,8 +42,10 @@
 
 #define LED_QUEUE_DEPTH     5
 #define TX_QUEUE_DEPTH      20
+#define ELEVATOR_MOVE_QUEUE_DEPTH 20
 #define LED_QUEUE_SIZE      sizeof( int )
 #define TX_QUEUE_SIZE       ( MSG_SIZE * sizeof( char ) )
+#define ELEVATOR_MOVE_QUEUE_SIZE sizeof( floor_t )
 #define QUEUE_WAIT_MS       ( 10 / portTICK_RATE_MS )
 
 #define SEM_WAIT_MS         ( 10 / portTICK_RATE_MS )
@@ -168,6 +170,7 @@ void pollButtonControlTask( void *params );
 void ledControlTask( void *params );
 void txControlTask( void *params );
 void rxControlTask( void *params );
+void elevatorMoveTask( void );
 
 // helper functions
 void ms_delay( int ms );

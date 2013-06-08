@@ -403,3 +403,16 @@ void operate_door( void )
     while( !close_door() )
         ms_delay( DOOR_OPEN_DURATION_MS );
 }
+
+
+void elevatorMoveTask ( void )
+{
+    extern xQueueHandle elevator_move_queue_handle;
+
+    //To show that this task is running:
+    transmit_string( "Elevator move task running!\r\n" );
+
+    while(1)
+    {
+    }
+}
