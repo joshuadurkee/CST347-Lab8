@@ -126,8 +126,7 @@ void register_commands( void )
     if( FreeRTOS_CLIRegisterCommand( &xTaskStatsCommand ) == pdFAIL
      || FreeRTOS_CLIRegisterCommand( &xChangeMaximumSpeedCommand ) == pdFAIL
      || FreeRTOS_CLIRegisterCommand( &xChangeAccelerationCommand ) == pdFAIL
-     || FreeRTOS_CLIRegisterCommand( &xRunTimeStatsCommand ) == pdFAIL
-     || 0 )
+     || FreeRTOS_CLIRegisterCommand( &xRunTimeStatsCommand ) == pdFAIL )
     {
         // error registering commands
         while( 1 );
