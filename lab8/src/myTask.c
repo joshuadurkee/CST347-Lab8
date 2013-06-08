@@ -27,7 +27,9 @@ extern xSemaphoreHandle buttonPress;
 extern xSemaphoreHandle ledNAction[ NUM_LEDS ];
 extern xSemaphoreHandle inputByteBuffer;
 
-task_parameter_t task_parameter;
+static bool door_interference = false;
+
+static task_parameter_t task_parameter;
 
 
 void irqButtonControlTask( void *params )
@@ -162,7 +164,7 @@ void rxControlTask( void *params )
 
                 break;
             case DOOR_INTF_CHAR:
-                
+                door_interference = true;
                 break;
             case '\r':              /* complete command string on carriage return */
                 // echo back end of the line entered by user
