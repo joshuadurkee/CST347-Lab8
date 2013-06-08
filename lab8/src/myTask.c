@@ -45,7 +45,7 @@ void irqButtonControlTask( void *params )
         xSemaphoreTake( buttonPress, portMAX_DELAY );
 
         // debounce buttons
-        msDelay( 10 );
+        ms_delay( 10 );
 
         for( i = 0; i < NUM_SWITCHES; i++ )
         {
@@ -74,7 +74,7 @@ void pollButtonControlTask( void *params )
         button_pressed = poll_buttons();
 
         // debounce buttons
-        msDelay( 100 );
+        ms_delay( 100 );
 
         // check if button is pressed and is not stale
         if( button_pressed >= 0 && button_pressed != button_pressed_old )
@@ -189,7 +189,7 @@ void rxControlTask( void *params )
 
 
 // millisecond delay
-void msDelay( int ms )
+void ms_delay( int ms )
 {
     vTaskDelay( ms / portTICK_RATE_MS );
 }
@@ -204,7 +204,7 @@ int poll_buttons( void )
     if( mPORTCReadBits( CLOSE_BUTTON_BIT ) == 0 )
         return CLOSE_BUTTON_BIT;
 
-    msDelay( 10 );
+    ms_delay( 10 );
 
     if( mPORTCReadBits( OPEN_BUTTON_BIT ) == 0 )
         return OPEN_BUTTON_BIT;
@@ -291,7 +291,7 @@ void send_movement_status( float distance_f, float speed_fps )
 }
 
 
-void update_elevator_leds( elevator_movement_t led_state )
+void set_elevator_up_down_leds( elevator_movement_t led_state )
 {
     switch( led_state )
     {
@@ -345,16 +345,16 @@ void set_door_leds( door_movement_t state )
 void open_door( void )
 {
     set_door_leds( CLOSED );
-    msDelay( DOOR_STATE_DURATION_MS );
+    ms_delay( DOOR_STATE_DURATION_MS );
 
     set_door_leds( MOSTLY_CLOSED );
-    msDelay( DOOR_STATE_DURATION_MS );
+    ms_delay( DOOR_STATE_DURATION_MS );
 
     set_door_leds( MOSTLY_OPEN );
-    msDelay( DOOR_STATE_DURATION_MS );
+    ms_delay( DOOR_STATE_DURATION_MS );
 
     set_door_leds( OPEN );
-    msDelay( DOOR_STATE_DURATION_MS );
+    ms_delay( DOOR_STATE_DURATION_MS );
 }
 
 
@@ -362,13 +362,13 @@ void open_door( void )
 bool close_door( void )
 {
     set_door_leds( OPEN );
-    msDelay( DOOR_STATE_DURATION_MS );
+    ms_delay( DOOR_STATE_DURATION_MS );
 
     set_door_leds( MOSTLY_OPEN );
-    msDelay( DOOR_STATE_DURATION_MS );
+    ms_delay( DOOR_STATE_DURATION_MS );
 
     set_door_leds( MOSTLY_CLOSED );
-    msDelay( DOOR_STATE_DURATION_MS );
+    ms_delay( DOOR_STATE_DURATION_MS );
 
     // check for door interference
     if( door_interference )
@@ -378,16 +378,16 @@ bool close_door( void )
         transmit_string( "Door interference closing door!\r\n" );
 
         set_door_leds( MOSTLY_OPEN );
-        msDelay( DOOR_STATE_DURATION_MS );
+        ms_delay( DOOR_STATE_DURATION_MS );
 
         set_door_leds( OPEN );
-        msDelay( DOOR_STATE_DURATION_MS );
+        ms_delay( DOOR_STATE_DURATION_MS );
 
         return false;
     }
 
     set_door_leds( CLOSED );
-    msDelay( DOOR_STATE_DURATION_MS );
+    ms_delay( DOOR_STATE_DURATION_MS );
 
     return true;
 }
@@ -398,7 +398,7 @@ bool operate_door( void )
 {
     open_door();
 
-    msDelay( DOOR_OPEN_DURATION_MS );
+    ms_delay( DOOR_OPEN_DURATION_MS );
 
     return close_door();
 }

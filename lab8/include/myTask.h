@@ -170,12 +170,12 @@ void txControlTask( void *params );
 void rxControlTask( void *params );
 
 // helper functions
-void msDelay( int ms );
+void ms_delay( int ms );
 int poll_buttons( void );
 void transmit_string( char *tx_ptr );
 void send_elevator_status( floor_t destination_floor, bool is_moving );
 void send_movement_status( float distance_f, float speed_fps );
-void update_elevator_leds( elevator_movement_t led_state );
+void set_elevator_up_down_leds( elevator_movement_t led_state );
 void set_door_leds( door_movement_t state );
 void open_door( void );
 bool close_door( void );
