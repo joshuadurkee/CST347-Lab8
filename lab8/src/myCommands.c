@@ -99,6 +99,46 @@ portBASE_TYPE prvChangeAccelerationCommand( int8_t *pcWriteBuffer, size_t xWrite
 }
 
 /*----------------------------------------------------------------------
+    ES command (emergency stop)
+----------------------------------------------------------------------*/
+const xCommandLineInput xEmergencyStopCommand =
+{
+    "ES",
+    "Emergency Stop: sets the emergency stop flag, moving the elevator to the ground floor and holding the doors open till the flag is cleared\r\n",
+    prvEmergencyStopCommand,
+    0
+};
+
+portBASE_TYPE prvEmergencyStopCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
+{
+    extern bool emergency_stop_flag;
+    emergency_stop_flag = true;
+    sprintf( pcWriteBuffer, "Emergency stop triggered!\r\n");
+
+    return pdFALSE;
+}
+
+/*----------------------------------------------------------------------
+    ER command (emergency clear)
+----------------------------------------------------------------------*/
+const xCommandLineInput xEmergencyClearCommand =
+{
+    "ER",
+    "Emergancy Clear: clears the emergency stop flag, allowing the elevator to resume normal operations\r\n",
+    prvEmergencyClearCommand,
+    0
+};
+
+portBASE_TYPE prvEmergencyClearCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
+{
+    extern bool emergency_stop_flag;
+    emergency_stop_flag = false;
+    sprintf( pcWriteBuffer, "Emergency clear triggered!\r\n");
+
+    return pdFALSE;
+}
+
+/*----------------------------------------------------------------------
     run-time-stats command
 ----------------------------------------------------------------------*/
 const char runTimeListHdr[] = "Name\t\tAbs Time\t% Time\r\n";
@@ -126,6 +166,8 @@ void register_commands( void )
     if( FreeRTOS_CLIRegisterCommand( &xTaskStatsCommand ) == pdFAIL
      || FreeRTOS_CLIRegisterCommand( &xChangeMaximumSpeedCommand ) == pdFAIL
      || FreeRTOS_CLIRegisterCommand( &xChangeAccelerationCommand ) == pdFAIL
+     || FreeRTOS_CLIRegisterCommand( &xEmergencyStopCommand ) == pdFAIL
+     || FreeRTOS_CLIRegisterCommand( &xEmergencyClearCommand ) == pdFAIL
      || FreeRTOS_CLIRegisterCommand( &xRunTimeStatsCommand ) == pdFAIL )
     {
         // error registering commands

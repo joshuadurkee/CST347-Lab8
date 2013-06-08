@@ -28,6 +28,7 @@ extern xSemaphoreHandle ledNAction[ NUM_LEDS ];
 extern xSemaphoreHandle inputByteBuffer;
 
 static bool door_interference = false;
+bool emergency_stop_flag = false;
 
 static task_parameter_t task_parameter;
 
@@ -158,10 +159,10 @@ void rxControlTask( void *params )
 
                 break;
             case EM_STOP_CHAR:
-
+                emergency_stop_flag = true;
                 break;
             case EM_CLR_CHAR_:
-
+                emergency_stop_flag = false;
                 break;
             case DOOR_INTF_CHAR:
                 door_interference = true;
