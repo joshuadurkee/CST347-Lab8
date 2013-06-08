@@ -109,6 +109,7 @@ convert a time in milliseconds into a time in ticks. */
 #define TX_TASK_PRIORITY            1
 #define RX_TASK_PRIORITY            1
 #define ELEVATOR_MOVE_TASK_PRIORITY 1
+#define MOTOR_CONTROL_TASK_PRIORITY 1
 
 // variables
 xTaskHandle irq_button_task_handle;
@@ -117,6 +118,7 @@ xTaskHandle led_task_handle[ NUM_LEDS ];
 xTaskHandle tx_task_handle;
 xTaskHandle rx_task_handle;
 xTaskHandle elevator_move_task_handle;
+xTaskHandle motor_control_task_handle;
 
 xQueueHandle led_queue_handle[ NUM_LEDS ];
 xQueueHandle tx_queue_handle;
@@ -198,12 +200,22 @@ int main(void)
 
     // create Elevator Move task
     xTaskCreate(
-                    elevatorMoveTask,
+                    (pdTASK_CODE)elevatorMoveTask,
                     "Elevator Move task",
                     configMINIMAL_STACK_SIZE,
                     NULL,
                     ELEVATOR_MOVE_TASK_PRIORITY,
                     &elevator_move_task_handle
+               );
+
+    // create Motor Control task
+    xTaskCreate(
+                    (pdTASK_CODE)motorControlTask,
+                    "Motor Control task",
+                    configMINIMAL_STACK_SIZE,
+                    NULL,
+                    MOTOR_CONTROL_TASK_PRIORITY,
+                    &motor_control_task_handle
                );
 
     // create binary semaphores which are safe to call with xSemaphoreGiveFromISR()
@@ -220,6 +232,7 @@ int main(void)
     xSemaphoreTake( ledNAction[ 2 ], portMAX_DELAY );
 
     vTaskSuspend( rx_task_handle );
+    vTaskSuspend( motor_control_task_handle );
 
     // initialize Tx queue
     tx_queue_handle = xQueueCreate( TX_QUEUE_DEPTH, TX_QUEUE_SIZE );

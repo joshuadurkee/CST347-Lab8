@@ -416,3 +416,48 @@ void elevatorMoveTask ( void )
     {
     }
 }
+
+void motorControlTask( void )
+{
+    //To show that this task is running:
+    transmit_string( "Motor control task running!\r\n" );
+
+    static motor_led_state_t state = LED3;
+    extern float current_speed_fps;
+
+    while (1)
+    {
+        set_motor_leds(state);
+        state = (state + MOTOR_CONTROL_LED_INCREMENT) % NUM_MOTOR_LED_STATES;
+        if (current_speed_fps != 0)
+        {
+            ms_delay(MOTOR_CONTROL_BASE_DELAY/(current_speed_fps-((int)current_speed_fps % MOTOR_CONTROL_DELAY_FACTOR)));
+        }
+        else
+        {
+            vTaskSuspend(NULL);
+        }
+    }
+}
+
+void set_motor_leds( motor_led_state_t state )
+{
+    switch( state )
+    {
+        case LED1:
+            SET_BITS  ( DOOR_LED_0 );
+            CLEAR_BITS( DOOR_LED_1 );
+            CLEAR_BITS( DOOR_LED_2 );
+            break;
+        case LED2:
+            CLEAR_BITS( DOOR_LED_0 );
+            SET_BITS  ( DOOR_LED_1 );
+            CLEAR_BITS( DOOR_LED_2 );
+            break;
+        case LED3:
+            CLEAR_BITS( DOOR_LED_0 );
+            CLEAR_BITS( DOOR_LED_1 );
+            SET_BITS  ( DOOR_LED_2 );
+            break;
+    }
+}

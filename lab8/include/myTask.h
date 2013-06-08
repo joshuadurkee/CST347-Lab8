@@ -103,6 +103,11 @@
 #define DOOR_OPEN_DURATION_MS \
                             ( 5000 / portTICK_RATE_MS )
 
+// motor control
+#define MOTOR_CONTROL_LED_INCREMENT 1
+#define MOTOR_CONTROL_BASE_DELAY    10000
+#define MOTOR_CONTROL_DELAY_FACTOR  10
+
 
 //
 // macros
@@ -159,6 +164,15 @@ typedef enum
     NUM_DOOR_STATES
 } door_movement_t;
 
+typedef enum
+{
+    LED1,                     /* LED 1 (RD0) is lit                           */
+    LED2,                     /* LED 2 (RD1) is lit                           */
+    LED3,                     /* LED 3 (RD2) is lit                           */
+
+    NUM_MOTOR_LED_STATES
+} motor_led_state_t;
+
 
 //
 // prototypes
@@ -171,6 +185,7 @@ void ledControlTask( void *params );
 void txControlTask( void *params );
 void rxControlTask( void *params );
 void elevatorMoveTask( void );
+void motorControlTask( void );
 
 // helper functions
 void ms_delay( int ms );
@@ -183,6 +198,7 @@ void set_door_leds( door_movement_t state );
 void open_door( void );
 bool close_door( void );
 void operate_door( void );
+void set_motor_leds( motor_led_state_t state );
 
 
 #endif	/* MYTASK_H */
