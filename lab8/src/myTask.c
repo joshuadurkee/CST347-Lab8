@@ -30,11 +30,6 @@ extern xSemaphoreHandle buttonPress;
 extern xSemaphoreHandle ledNAction[ NUM_LEDS ];
 extern xSemaphoreHandle inputByteBuffer;
 
-//int accel_fpss                  = ACCEL_FPSS_DFLT;
-//int max_speed_fps               = MAX_SPEED_FPS_DFLT;
-//static float current_speed_fps  = 0;
-//static float current_position_f = GD_FLOOR_POS;
-
 elevator_movement_t elevator =
 {
     STOP,
@@ -490,7 +485,7 @@ void set_estop( void )
 
     emergency_stop_flag = true;
 
-    // send move to ground floor command in case its needed to jump start elevatorMoveTask,
+    // send move to ground floor command in case it is needed to jump start elevatorMoveTask,
     // ok because elevator_move_queue_handle is cleared after an estop
     queue_elevator_movement( floor );
 }
@@ -512,50 +507,65 @@ void queue_elevator_movement( int floor )
 }
 
 
-float calc_velocity( float acceleration, float time, float previous_velocity )
-{
-    return ( acceleration * time ) + previous_velocity;
-}
-
-
 void elevatorMoveTask( void )
 {
-    int     next_floor;
+    int     next_floor_position;
+    elevator_direction_t
+            calculated_direction;
+    int     max_speed;
+    int     acceleration;
 
     while( 1 )
     {
         // receive the next floor position to move to
-        xQueueReceive( elevator_move_queue_handle, &next_floor, portMAX_DELAY );
+        xQueueReceive( elevator_move_queue_handle, &next_floor_position, portMAX_DELAY );
+
+        /* set static acceleration and max speed for each move of the elevator,
+         * this is necessary as using a dynamic acceleration could result in an
+         * elevator not being able to decelerate quickly enough to prevent a crash */
+        max_speed = elevator.max_speed;
+        acceleration = elevator.acceleration;
+
+        //
 
         // goto the next destination
-        while( elevator.position != next_floor )
+        while( elevator.position != next_floor_position )
         {
             ms_delay( ELEVATOR_UPDATE_INTERVAL_MS );
 
             if( emergency_stop_flag )
             {
                 // override the destination with the ground floor
-                next_floor = GD_FLOOR_POS;
+                next_floor_position = GD_FLOOR_POS;
             }
 
-            // determine if heading in correct direction to destination
+            // determine direction to destination floor
+            calculated_direction = get_dir_to_dest_flr( elevator.position, next_floor_position );
 
+            // determine if moving in wrong direction to destination floor, as estop overrides destination
+            if( elevator.direction != STOP && elevator.direction != calculated_direction )
+            {
+                // TODO deccelerate immediately in order to change direction
+                
+            }
 
             // determine position where decceleration should start in order to stop at destination floor
 
             
-            // TODO calculate updated position
+            // TODO calculate updated position for dt=500ms
             elevator.position = 0;
 
+            // determine if
+
             // TODO calculate updated speed (determine whether to decelerate, stay at max speed, or accelerate)
-            elevator.speed = calc_velocity( elevator.acceleration, elevator.speed, ELEVATOR_UPDATE_INTERVAL );
-            elevator.speed = MAX( elevator.speed, elevator.max_speed );
+            elevator.speed = calc_velocity( acceleration, elevator.speed, ELEVATOR_UPDATE_INTERVAL_MS );
+            elevator.speed = MAX( elevator.speed, max_speed );
 
             // display direction LEDs
 //            set_elevator_up_down_leds(  );
 
             // display distance and speed status
-            send_elevator_status( next_floor, (bool)elevator.speed );
+            send_elevator_status( next_floor_position, (bool)elevator.speed );
             send_movement_status( elevator.position, elevator.speed );
         }
         
@@ -577,4 +587,28 @@ void elevatorMoveTask( void )
             operate_door();
         }
     }
+}
+
+
+// get direction to destination floor
+elevator_direction_t get_dir_to_dest_flr( int cur_pos, int dest_pos )
+{
+    if( cur_pos - dest_pos > 0 )
+        return DOWN;
+    else if( cur_pos - dest_pos < 0 )
+        return UP;
+    else
+        return STOP;
+}
+
+
+float calc_position( float acceleration, float time, float previous_velocity )
+{
+    return ( acceleration * time ) + previous_velocity;
+}
+
+
+float calc_velocity( float acceleration, float time, float previous_velocity )
+{
+    return ( acceleration * time ) + previous_velocity;
 }

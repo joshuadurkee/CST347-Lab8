@@ -89,11 +89,9 @@
 // elevator movement
 #define ACCEL_FPSS_DFLT     2
 #define MAX_SPEED_FPS_DFLT  40
-#define ELEVATOR_UPDATE_INTERVAL \
-                            500
 #define ELEVATOR_UPDATE_INTERVAL_MS \
-                            ( 500 / portTICK_RATE_MS )
-#define EM_CLR_WAIT_MS      ( 20 / portTICK_RATE_MS )
+                            500
+#define EM_CLR_WAIT_MS      20
 
 // elevator positions
 #define GD_FLOOR_POS        0
@@ -219,6 +217,9 @@ void set_motor_leds( motor_led_state_t state );
 void set_estop( void );
 void clear_estop( void );
 void queue_elevator_movement( int floor );
+elevator_direction_t get_dir_to_dest_flr( int cur_pos, int dest_pos );
+float calc_position( float acceleration, float time, float previous_velocity );
+float calc_velocity( float acceleration, float time, float previous_velocity );
 
 
 #endif	/* MYTASK_H */
