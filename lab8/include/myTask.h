@@ -115,9 +115,11 @@
 // macros
 //
 
+#define ABS(x)              (  ( x ) < 0 ? -( x ) : ( x )  )
+#define AVG(x,y)            (  ( x + y ) / 2  )
 #define MAX(x,y)            (  x > y ? x : y  )
 #define MIN(x,y)            (  x < y ? x : y  )
-#define AVG(x,y)            (  ( x + y ) / 2  )
+#define SQRD(x)             (  ( x ) * ( x )  )
 
 /* helper macros */
 #define PASTE(a, b)         a##b
@@ -141,9 +143,9 @@
 
 typedef enum
 {
-    UP,                         /* elevator moving up                         */
-    DOWN,                       /* elevator moving down                       */
-    STOP                        /* elevator is stopped                        */
+    UP = 1,                     /* elevator moving up                         */
+    DOWN = -1,                  /* elevator moving down                       */
+    STOP = 0                    /* elevator is stopped                        */
 } elevator_direction_t;
 
 

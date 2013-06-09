@@ -510,6 +510,7 @@ void queue_elevator_movement( int floor )
 void elevatorMoveTask( void )
 {
     int     next_floor_pos;
+    int     calculated_stop_accel_pos;
     int     calculated_decel_pos;
     elevator_direction_t
             calculated_dir;
@@ -524,8 +525,6 @@ void elevatorMoveTask( void )
          * elevator not being able to decelerate quickly enough to prevent a crash */
         elevator.max_speed = elevator.new_max_speed;
         elevator.accel = elevator.new_accel;
-
-        //
 
         // goto the next destination
         while( elevator.cur_pos != next_floor_pos )
@@ -545,23 +544,31 @@ void elevatorMoveTask( void )
             if( elevator.dir != STOP && elevator.dir != calculated_dir )
             {
                 // TODO deccelerate immediately in order to change direction
-                
+
+
+                // NOTE: updating deceleration position is not necessary as this will occur
+                //       after next xQueueReceive (either previously queued or queued by set_estop function)
             }
 
-            // determine position where decceleration should start in order to stop at destination floor
+            // determine position where acceleration should stop in order to not exceed max speed
+            // and to meet requirements to start decelerating in time to stop at destination floor
+            calculated_stop_accel_pos = get_stop_accel_pos( elevator );
+
+            // determine position where deceleration should start in order to stop at destination floor
             calculated_decel_pos = get_decel_pos( elevator );
             
             // TODO calculate updated position for dt=500ms
-            elevator.cur_pos = 0;
+            // NOTE: this may include stopping acceleration or starting deceleration or both
+//            elevator.cur_pos = 0;
 
             // determine if
 
-            // TODO calculate updated speed (determine whether to decelerate, stay at max speed, or accelerate)
-            elevator.speed = calc_velocity( elevator.accel, elevator.speed, ELEVATOR_UPDATE_INTERVAL_MS );
-            elevator.speed = MAX( elevator.speed, elevator.max_speed );
+            // TODO calculate current speed
+//            elevator.speed = calc_velocity( elevator.accel, elevator.speed, ELEVATOR_UPDATE_INTERVAL_MS );
+//            elevator.speed = MAX( elevator.speed, elevator.max_speed );
 
             // display direction LEDs
-//            set_elevator_up_down_leds(  );
+            set_elevator_up_down_leds( elevator.dir );
 
             // display distance and speed status
             send_elevator_status( next_floor_pos, (bool)elevator.speed );
@@ -601,12 +608,67 @@ elevator_direction_t get_dir_to_dest_flr( elevator_movement_t elev )
 }
 
 
-// get the deceleration position (assumes static max speed and acceleration)
-//get_decel_pos( elevator, max_speed, accel, next_floor_pos );
+// get the stop acceleration position (assumes static max speed and acceleration), which
+// is the position where acceleration must stop in order to not exceed max speed
+// and to meet requirements to start decelerating in time to stop at destination floor
+int get_stop_accel_pos( elevator_movement_t elev )
+{
+    float   halfway_pos;
+    float   delta_halfway_pos;
+    float   stop_accel_pos_for_max_speed;
+    float   delta_stop_accel_pos_for_max_speed;
+    float   stop_accel_pos;
+
+    // determine position half way between current position and destination floor
+    halfway_pos = AVG( elev.cur_pos, elev.dest_pos );
+
+    // determine the acceleration position needed when moving from zero to maximum speed,
+    // this is a kinmatic equation
+    // TODO set as function of direction
+    stop_accel_pos_for_max_speed = SQRD( elev.max_speed ) / ( 2 * elev.accel );
+
+    // set acceleration position to halfway point if closer to destination floor
+    delta_halfway_pos = ABS( elev.cur_pos - halfway_pos );
+    delta_stop_accel_pos_for_max_speed = ABS( elev.cur_pos - stop_accel_pos_for_max_speed );
+
+    if( delta_halfway_pos < delta_stop_accel_pos_for_max_speed )
+        stop_accel_pos = halfway_pos;
+    else
+        stop_accel_pos = stop_accel_pos_for_max_speed;
+
+    return stop_accel_pos;
+}
+
+
+// get the deceleration position (assumes static max speed and acceleration), which
+// is the position where deceleration must start in order to successfully stop at
+// destination floor
 int get_decel_pos( elevator_movement_t elev )
 {
-    // TODO
-    return ( elev.max_speed * elev.max_speed ) / ( 2 * elev.accel );
+    float   halfway_pos;
+    float   delta_halfway_pos;
+    float   decel_pos_for_max_speed;
+    float   delta_decel_pos_for_max_speed;
+    float   decel_pos;
+
+    // determine position half way between current position and destination floor
+    halfway_pos = AVG( elev.cur_pos, elev.dest_pos );
+
+    // determine the deceleration position needed when moving at maximum speed,
+    // this is a kinmatic equation
+    // TODO set as function of direction
+    decel_pos_for_max_speed = SQRD( elev.max_speed ) / ( 2 * elev.accel );
+
+    // set deceleration position to halfway point if closer to destination floor
+    delta_halfway_pos = ABS( elev.dest_pos - halfway_pos );
+    delta_decel_pos_for_max_speed = ABS( elev.dest_pos - decel_pos_for_max_speed );
+
+    if( delta_halfway_pos < delta_decel_pos_for_max_speed )
+        decel_pos = halfway_pos;
+    else
+        decel_pos = decel_pos_for_max_speed;
+
+    return decel_pos;
 }
 
 
