@@ -30,10 +30,19 @@ extern xSemaphoreHandle buttonPress;
 extern xSemaphoreHandle ledNAction[ NUM_LEDS ];
 extern xSemaphoreHandle inputByteBuffer;
 
-int accel_fpss                  = ACCEL_FPSS_DFLT;
-int max_speed_fps               = MAX_SPEED_FPS_DFLT;
-static float current_speed_fps  = 0;
-static float current_position_f = GD_FLOOR_POS;
+//int accel_fpss                  = ACCEL_FPSS_DFLT;
+//int max_speed_fps               = MAX_SPEED_FPS_DFLT;
+//static float current_speed_fps  = 0;
+//static float current_position_f = GD_FLOOR_POS;
+
+elevator_movement_t elevator =
+{
+    STOP,
+    (float)GD_FLOOR_POS,
+    0.0f,
+    MAX_SPEED_FPS_DFLT,
+    ACCEL_FPSS_DFLT,
+};
 
 static bool door_interference_flag = false;
 static bool emergency_stop_flag    = false;
@@ -304,7 +313,7 @@ void send_movement_status( float position_f, float speed_fps )
 }
 
 
-void set_elevator_up_down_leds( elevator_movement_t led_state )
+void set_elevator_up_down_leds( elevator_direction_t led_state )
 {
     switch( led_state )
     {
@@ -426,13 +435,13 @@ void motorControlTask( void )
     {
         set_motor_leds( state );
         
-        if( current_speed_fps != 0 )
+        if( elevator.speed != 0 )
         {
             // protect against negative velocities
-            if( current_speed_fps > 0 )
-                motor_speed = current_speed_fps;
+            if( elevator.speed > 0 )
+                motor_speed = elevator.speed;
             else
-                motor_speed = current_speed_fps * -1;
+                motor_speed = elevator.speed * -1;
 
             // shave off one's digit to round down to factor of 10
             motor_speed = motor_speed - ( (int)motor_speed % MOTOR_CONTROL_DELAY_FACTOR );
@@ -519,7 +528,7 @@ void elevatorMoveTask( void )
         xQueueReceive( elevator_move_queue_handle, &next_floor, portMAX_DELAY );
 
         // goto the next destination
-        while( current_position_f != next_floor )
+        while( elevator.position != next_floor )
         {
             ms_delay( ELEVATOR_UPDATE_INTERVAL_MS );
 
@@ -527,18 +536,27 @@ void elevatorMoveTask( void )
             {
                 // override the destination with the ground floor
                 next_floor = GD_FLOOR_POS;
-            }                
+            }
+
+            // determine if heading in correct direction to destination
+
+
+            // determine position where decceleration should start in order to stop at destination floor
+
             
             // TODO calculate updated position
-            current_position_f = 0;
+            elevator.position = 0;
 
             // TODO calculate updated speed (determine whether to decelerate, stay at max speed, or accelerate)
-            current_speed_fps = calc_velocity( accel_fpss, current_speed_fps, ELEVATOR_UPDATE_INTERVAL );
-            current_speed_fps = MAX( current_speed_fps, max_speed_fps );
+            elevator.speed = calc_velocity( elevator.acceleration, elevator.speed, ELEVATOR_UPDATE_INTERVAL );
+            elevator.speed = MAX( elevator.speed, elevator.max_speed );
+
+            // display direction LEDs
+//            set_elevator_up_down_leds(  );
 
             // display distance and speed status
-            send_elevator_status( next_floor, (bool)current_speed_fps );
-            send_movement_status( current_position_f, current_speed_fps );
+            send_elevator_status( next_floor, (bool)elevator.speed );
+            send_movement_status( elevator.position, elevator.speed );
         }
         
         if( emergency_stop_flag )

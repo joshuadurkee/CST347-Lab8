@@ -136,21 +136,16 @@
 #define TOGGLE_BITS(x)      PORTToggleBits( GET_PORT_NAME(x), GET_PIN_NAME(x) )
 
 
-// stuctures
-typedef struct
-{
-    int num;                    /* The number of the LED to toggle, from 0-2. */
-    int rate;                   /* The rate at which the LED should be toggle, in milliseconds. */
-} task_parameter_t;
-
-
+//
 // enumerated types
+//
+
 typedef enum
 {
     UP,                         /* elevator moving up                         */
     DOWN,                       /* elevator moving down                       */
     STOP                        /* elevator is stopped                        */
-} elevator_movement_t;
+} elevator_direction_t;
 
 
 typedef enum
@@ -163,6 +158,7 @@ typedef enum
     NUM_DOOR_STATES
 } door_movement_t;
 
+
 typedef enum
 {
     LED1,                     /* LED 1 (RD0) is lit                           */
@@ -171,6 +167,28 @@ typedef enum
 
     NUM_MOTOR_LED_STATES
 } motor_led_state_t;
+
+
+//
+// stuctures
+//
+
+typedef struct
+{
+    int num;                    /* The number of the LED to toggle, from 0-2. */
+    int rate;                   /* The rate at which the LED should be toggle, in milliseconds. */
+} task_parameter_t;
+
+
+typedef struct
+{
+    elevator_direction_t
+                direction;      /* direction elevator is moving               */
+    float       position;       /* position of elevator in feet               */
+    float       speed;          /* speed of eleveator in feet per second      */
+    int         max_speed;      /* maximum speed of elevator in feet per second */
+    int         acceleration;   /* acceleration of elevator in feet per second squared */
+} elevator_movement_t;
 
 
 //
@@ -192,7 +210,7 @@ int poll_buttons( void );
 void transmit_string( char *tx_ptr );
 void send_elevator_status( int destination_floor, bool is_moving );
 void send_movement_status( float position_f, float speed_fps );
-void set_elevator_up_down_leds( elevator_movement_t led_state );
+void set_elevator_up_down_leds( elevator_direction_t led_state );
 void set_door_leds( door_movement_t state );
 void open_door( void );
 bool close_door( void );

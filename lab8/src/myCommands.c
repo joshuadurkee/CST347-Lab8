@@ -12,6 +12,11 @@
 
 #include <myCommands.h>
 
+#include "myTask.h"
+
+
+extern elevator_movement_t elevator;
+
 
 /*----------------------------------------------------------------------
     task-stats command
@@ -48,7 +53,7 @@ const xCommandLineInput xChangeMaximumSpeedCommand =
 portBASE_TYPE prvChangeMaximumSpeedCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
 {
     portBASE_TYPE xParameter1StringLength;
-    extern int max_speed_fps;
+//    extern int max_speed_fps;
 
     /* Obtain the LED number , and the length of its name, from the command string. */
     const int8_t *pcParameter1 = FreeRTOS_CLIGetParameter (
@@ -59,9 +64,9 @@ portBASE_TYPE prvChangeMaximumSpeedCommand( int8_t *pcWriteBuffer, size_t xWrite
                           /* Store the parameter string length. */
                           &xParameter1StringLength );
 
-    max_speed_fps = atoi( pcParameter1 );
+    elevator.max_speed = atoi( pcParameter1 );
     
-    sprintf( pcWriteBuffer, "Maximum speed changed to %d feet/sec.\r\n", max_speed_fps );
+    sprintf( pcWriteBuffer, "Maximum speed changed to %d feet/sec.\r\n", elevator.max_speed );
 
     return pdFALSE;
 }
@@ -80,7 +85,7 @@ const xCommandLineInput xChangeAccelerationCommand =
 portBASE_TYPE prvChangeAccelerationCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
 {
     portBASE_TYPE xParameter1StringLength;
-    extern int accel_fpss;
+//    extern int accel_fpss;
 
     /* Obtain the LED number , and the length of its name, from the command string. */
     const int8_t *pcParameter1 = FreeRTOS_CLIGetParameter (
@@ -91,9 +96,9 @@ portBASE_TYPE prvChangeAccelerationCommand( int8_t *pcWriteBuffer, size_t xWrite
                           /* Store the parameter string length. */
                           &xParameter1StringLength );
 
-    accel_fpss = atoi( pcParameter1 );
+    elevator.acceleration = atoi( pcParameter1 );
 
-    sprintf( pcWriteBuffer, "Acceleration changed to %d feet/sec/sec.\r\n", accel_fpss );
+    sprintf( pcWriteBuffer, "Acceleration changed to %d feet/sec/sec.\r\n", elevator.acceleration );
 
     return pdFALSE;
 }
