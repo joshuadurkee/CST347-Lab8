@@ -19,16 +19,23 @@ extern xTaskHandle poll_button_task_handle;
 extern xTaskHandle led_task_handle[ NUM_LEDS ];
 extern xTaskHandle tx_task_handle;
 extern xTaskHandle rx_task_handle;
+extern xTaskHandle elevator_move_task_handle;
+extern xTaskHandle motor_control_task_handle;
 
 extern xQueueHandle led_queue_handle[ NUM_LEDS ];
 extern xQueueHandle tx_queue_handle;
+extern xQueueHandle elevator_move_queue_handle;
 
 extern xSemaphoreHandle buttonPress;
 extern xSemaphoreHandle ledNAction[ NUM_LEDS ];
 extern xSemaphoreHandle inputByteBuffer;
 
-static bool door_interference = false;
-bool emergency_stop_flag = false;
+int accel_fpss                 = ACCEL_FPSS_DFLT;
+int max_speed_fps              = MAX_SPEED_FPS_DFLT;
+static float current_speed_fps = 0;
+
+static bool door_interference_flag = false;
+bool emergency_stop_flag           = false;
 
 static task_parameter_t task_parameter;
 
@@ -150,8 +157,6 @@ void rxControlTask( void *params )
 
                 break;
             case P1_CALL_DN_CHAR:
-
-                break;
             case P1_CALL_UP_CHAR:
 
                 break;
@@ -165,7 +170,7 @@ void rxControlTask( void *params )
                 emergency_stop_flag = false;
                 break;
             case DOOR_INTF_CHAR:
-                door_interference = true;
+                door_interference_flag = true;
                 break;
             case '\r':              /* complete command string on carriage return */
                 // echo back end of the line entered by user
@@ -372,9 +377,9 @@ bool close_door( void )
     ms_delay( DOOR_STATE_DURATION_MS );
 
     // check for door interference
-    if( door_interference )
+    if( door_interference_flag )
     {
-        door_interference = false;
+        door_interference_flag = false;
 
         transmit_string( "Door interference closing door!\r\n" );
 
@@ -394,7 +399,7 @@ bool close_door( void )
 }
 
 
-// open and close door (until close door succeeds)
+// open and close door (until closing door succeeds)
 void operate_door( void )
 {
     open_door();
@@ -405,9 +410,9 @@ void operate_door( void )
 }
 
 
-void elevatorMoveTask ( void )
+void elevatorMoveTask( void )
 {
-    extern xQueueHandle elevator_move_queue_handle;
+    
 
     while(1)
     {
@@ -417,21 +422,22 @@ void elevatorMoveTask ( void )
 void motorControlTask( void )
 {
     static motor_led_state_t state = LED3;
-    extern float current_speed_fps;
     float motor_speed;
 
-    while (1)
+    while( 1 )
     {
-        set_motor_leds(state);
-        state = (state + MOTOR_CONTROL_LED_INCREMENT) % NUM_MOTOR_LED_STATES;
-        if (current_speed_fps != 0)
+        set_motor_leds( state );
+        
+        if( current_speed_fps != 0 )
         {
-            //protect against negative speeds
-            if (current_speed_fps > 0) { motor_speed = current_speed_fps; }
-            else                       { motor_speed = current_speed_fps * -1; }
+            // protect against negative speeds
+            if( current_speed_fps > 0 )
+                motor_speed = current_speed_fps;
+            else
+                motor_speed = current_speed_fps * -1;
 
-            //shave off one's digit to round down to factor of 10
-            motor_speed = motor_speed - ( ( int ) motor_speed % MOTOR_CONTROL_DELAY_FACTOR );
+            // shave off one's digit to round down to factor of 10
+            motor_speed = motor_speed - ( (int)motor_speed % MOTOR_CONTROL_DELAY_FACTOR );
 
             ms_delay( MOTOR_CONTROL_BASE_DELAY / motor_speed );
         }
@@ -439,6 +445,11 @@ void motorControlTask( void )
         {
             vTaskSuspend(NULL);
         }
+        
+        // decrement motor led state
+        state--;
+        state += NUM_MOTOR_LED_STATES;
+        state %= NUM_MOTOR_LED_STATES;
     }
 }
 

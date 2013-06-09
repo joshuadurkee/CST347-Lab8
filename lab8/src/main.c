@@ -129,10 +129,6 @@ xSemaphoreHandle ledNAction[ NUM_LEDS ];
 xSemaphoreHandle inputByteBuffer;
 xSemaphoreHandle outputStringBuffer;
 
-int accel_fpss    = ACCEL_FPSS_DFLT;
-int max_speed_fps = MAX_SPEED_FPS_DFLT;
-float current_speed_fps = 0;
-
 // prototypes
 static void prv_setup_hardware(void);
 

@@ -104,7 +104,6 @@
                             ( 5000 / portTICK_RATE_MS )
 
 // motor control
-#define MOTOR_CONTROL_LED_INCREMENT 1
 #define MOTOR_CONTROL_BASE_DELAY    10000
 #define MOTOR_CONTROL_DELAY_FACTOR  10
 
