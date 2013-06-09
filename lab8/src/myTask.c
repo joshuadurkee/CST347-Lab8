@@ -30,12 +30,13 @@ extern xSemaphoreHandle buttonPress;
 extern xSemaphoreHandle ledNAction[ NUM_LEDS ];
 extern xSemaphoreHandle inputByteBuffer;
 
-int accel_fpss                 = ACCEL_FPSS_DFLT;
-int max_speed_fps              = MAX_SPEED_FPS_DFLT;
-static float current_speed_fps = 0;
+int accel_fpss                  = ACCEL_FPSS_DFLT;
+int max_speed_fps               = MAX_SPEED_FPS_DFLT;
+static float current_speed_fps  = 0;
+static float current_position_f = GD_FLOOR_POS;
 
 static bool door_interference_flag = false;
-bool emergency_stop_flag           = false;
+static bool emergency_stop_flag    = false;
 
 static task_parameter_t task_parameter;
 
@@ -154,23 +155,29 @@ void rxControlTask( void *params )
         switch( rx_char )
         {
             case GD_CALL_CHAR:
-
+                queue_elevator_movement( GD_FLOOR_POS );
+                transmit_string( "\n" );
                 break;
             case P1_CALL_DN_CHAR:
             case P1_CALL_UP_CHAR:
-
+                queue_elevator_movement( P1 );
+                transmit_string( "\n" );
                 break;
             case P2_CALL_CHAR:
-
+                queue_elevator_movement( P2 );
+                transmit_string( "\n" );
                 break;
             case EM_STOP_CHAR:
-                emergency_stop_flag = true;
+                set_estop();
+                transmit_string( "\nEmergency stop triggered!\r\n" );
                 break;
             case EM_CLR_CHAR_:
-                emergency_stop_flag = false;
+                clear_estop();
+                transmit_string( "\nEmergency clear triggered!\r\n" );
                 break;
             case DOOR_INTF_CHAR:
                 door_interference_flag = true;
+                transmit_string( "\n" );
                 break;
             case '\r':              /* complete command string on carriage return */
                 // echo back end of the line entered by user
@@ -410,15 +417,6 @@ void operate_door( void )
 }
 
 
-void elevatorMoveTask( void )
-{
-    
-
-    while(1)
-    {
-    }
-}
-
 void motorControlTask( void )
 {
     static motor_led_state_t state = LED3;
@@ -473,5 +471,70 @@ void set_motor_leds( motor_led_state_t state )
             CLEAR_BITS( DOOR_LED_1 );
             SET_BITS  ( DOOR_LED_2 );
             break;
+    }
+}
+
+
+void set_estop( void )
+{
+    int floor = GD_FLOOR_POS;
+
+    emergency_stop_flag = true;
+
+    // send move to ground floor command in case its needed to jump start elevatorMoveTask,
+    // ok because elevator_move_queue_handle is cleared after an estop
+    queue_elevator_movement( floor );
+}
+
+
+void clear_estop( void )
+{
+    emergency_stop_flag = false;
+}
+
+
+void queue_elevator_movement( int floor )
+{
+    xQueueSendToBack(
+                        elevator_move_queue_handle,
+                        (void *) &floor,
+                        QUEUE_WAIT_MS
+                    );
+}
+
+
+void elevatorMoveTask( void )
+{
+    int     next_floor;
+    bool    en_route;
+
+    while(1)
+    {
+        xQueueReceive( elevator_move_queue_handle, &next_floor, portMAX_DELAY );
+
+        en_route= true;
+
+        // goto the next destination
+        while( en_route )
+        {
+            ms_delay( ELEVATOR_UPDATE_INTERVAL );
+
+            // check for emergency stop
+            if( emergency_stop_flag )
+            {
+                // prepare to move to ground floor
+                next_floor = GD_FLOOR_POS;
+                
+                // calculate the distance to the next floor
+
+
+                // clear queue when estop movement is complete
+
+            }
+            else
+            {
+                
+            }
+        }
     }
 }

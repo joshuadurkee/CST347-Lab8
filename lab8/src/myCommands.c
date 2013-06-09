@@ -111,8 +111,7 @@ const xCommandLineInput xEmergencyStopCommand =
 
 portBASE_TYPE prvEmergencyStopCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
 {
-    extern bool emergency_stop_flag;
-    emergency_stop_flag = true;
+    set_estop();
     sprintf( pcWriteBuffer, "Emergency stop triggered!\r\n");
 
     return pdFALSE;
@@ -131,8 +130,7 @@ const xCommandLineInput xEmergencyClearCommand =
 
 portBASE_TYPE prvEmergencyClearCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
 {
-    extern bool emergency_stop_flag;
-    emergency_stop_flag = false;
+    clear_estop();
     sprintf( pcWriteBuffer, "Emergency clear triggered!\r\n");
 
     return pdFALSE;

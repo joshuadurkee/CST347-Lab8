@@ -45,7 +45,7 @@
 #define ELEVATOR_MOVE_QUEUE_DEPTH 20
 #define LED_QUEUE_SIZE      sizeof( int )
 #define TX_QUEUE_SIZE       ( MSG_SIZE * sizeof( char ) )
-#define ELEVATOR_MOVE_QUEUE_SIZE sizeof( floor_t )
+#define ELEVATOR_MOVE_QUEUE_SIZE sizeof( int )
 #define QUEUE_WAIT_MS       ( 10 / portTICK_RATE_MS )
 
 #define SEM_WAIT_MS         ( 10 / portTICK_RATE_MS )
@@ -89,6 +89,8 @@
 // elevator movement
 #define ACCEL_FPSS_DFLT     2
 #define MAX_SPEED_FPS_DFLT  40
+#define ELEVATOR_UPDATE_INTERVAL \
+                            500
 
 // elevator positions
 #define GD_FLOOR_POS        0
@@ -198,6 +200,9 @@ void open_door( void );
 bool close_door( void );
 void operate_door( void );
 void set_motor_leds( motor_led_state_t state );
+void set_estop( void );
+void clear_estop( void );
+void queue_elevator_movement( int floor );
 
 
 #endif	/* MYTASK_H */
