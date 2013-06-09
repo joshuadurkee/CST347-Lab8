@@ -430,7 +430,7 @@ void motorControlTask( void )
         
         if( current_speed_fps != 0 )
         {
-            // protect against negative speeds
+            // protect against negative velocities
             if( current_speed_fps > 0 )
                 motor_speed = current_speed_fps;
             else
@@ -443,7 +443,8 @@ void motorControlTask( void )
         }
         else
         {
-            vTaskSuspend(NULL);
+            vTaskSuspend( NULL );
+            state = LED3;
         }
         
         // decrement motor led state
