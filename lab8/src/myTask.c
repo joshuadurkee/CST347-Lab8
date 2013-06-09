@@ -509,64 +509,63 @@ void queue_elevator_movement( int floor )
 
 void elevatorMoveTask( void )
 {
-    int     next_floor_position;
+    int     next_floor_pos;
+    int     calculated_decel_pos;
     elevator_direction_t
-            calculated_direction;
-    int     max_speed;
-    int     acceleration;
+            calculated_dir;
 
     while( 1 )
     {
         // receive the next floor position to move to
-        xQueueReceive( elevator_move_queue_handle, &next_floor_position, portMAX_DELAY );
+        xQueueReceive( elevator_move_queue_handle, &next_floor_pos, portMAX_DELAY );
 
         /* set static acceleration and max speed for each move of the elevator,
          * this is necessary as using a dynamic acceleration could result in an
          * elevator not being able to decelerate quickly enough to prevent a crash */
-        max_speed = elevator.max_speed;
-        acceleration = elevator.acceleration;
+        elevator.max_speed = elevator.new_max_speed;
+        elevator.accel = elevator.new_accel;
 
         //
 
         // goto the next destination
-        while( elevator.position != next_floor_position )
+        while( elevator.cur_pos != next_floor_pos )
         {
             ms_delay( ELEVATOR_UPDATE_INTERVAL_MS );
 
             if( emergency_stop_flag )
             {
                 // override the destination with the ground floor
-                next_floor_position = GD_FLOOR_POS;
+                next_floor_pos = GD_FLOOR_POS;
             }
 
             // determine direction to destination floor
-            calculated_direction = get_dir_to_dest_flr( elevator.position, next_floor_position );
+            calculated_dir = get_dir_to_dest_flr( elevator );
 
             // determine if moving in wrong direction to destination floor, as estop overrides destination
-            if( elevator.direction != STOP && elevator.direction != calculated_direction )
+            if( elevator.dir != STOP && elevator.dir != calculated_dir )
             {
                 // TODO deccelerate immediately in order to change direction
                 
             }
 
             // determine position where decceleration should start in order to stop at destination floor
-
+            calculated_decel_pos = get_decel_pos( elevator );
             
             // TODO calculate updated position for dt=500ms
-            elevator.position = 0;
+            elevator.cur_pos = 0;
 
             // determine if
 
             // TODO calculate updated speed (determine whether to decelerate, stay at max speed, or accelerate)
-            elevator.speed = calc_velocity( acceleration, elevator.speed, ELEVATOR_UPDATE_INTERVAL_MS );
-            elevator.speed = MAX( elevator.speed, max_speed );
+            elevator.speed = calc_velocity( elevator.accel, elevator.speed, ELEVATOR_UPDATE_INTERVAL_MS );
+            elevator.speed = MAX( elevator.speed, elevator.max_speed );
 
             // display direction LEDs
 //            set_elevator_up_down_leds(  );
 
             // display distance and speed status
-            send_elevator_status( next_floor_position, (bool)elevator.speed );
-            send_movement_status( elevator.position, elevator.speed );
+            send_elevator_status( next_floor_pos, (bool)elevator.speed );
+            send_movement_status( elevator.cur_pos, elevator.speed );
         }
         
         if( emergency_stop_flag )
@@ -591,14 +590,23 @@ void elevatorMoveTask( void )
 
 
 // get direction to destination floor
-elevator_direction_t get_dir_to_dest_flr( int cur_pos, int dest_pos )
+elevator_direction_t get_dir_to_dest_flr( elevator_movement_t elev )
 {
-    if( cur_pos - dest_pos > 0 )
+    if( elev.cur_pos - elev.dest_pos > 0 )
         return DOWN;
-    else if( cur_pos - dest_pos < 0 )
+    else if( elev.cur_pos - elev.dest_pos < 0 )
         return UP;
     else
         return STOP;
+}
+
+
+// get the deceleration position (assumes static max speed and acceleration)
+//get_decel_pos( elevator, max_speed, accel, next_floor_pos );
+int get_decel_pos( elevator_movement_t elev )
+{
+    // TODO
+    return ( elev.max_speed * elev.max_speed ) / ( 2 * elev.accel );
 }
 
 

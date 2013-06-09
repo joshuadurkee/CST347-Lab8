@@ -115,8 +115,9 @@
 // macros
 //
 
-#define MAX(x,y)            ( x > y ? x : y )
-#define MIN(x,y)            ( x < y ? x : y )
+#define MAX(x,y)            (  x > y ? x : y  )
+#define MIN(x,y)            (  x < y ? x : y  )
+#define AVG(x,y)            (  ( x + y ) / 2  )
 
 /* helper macros */
 #define PASTE(a, b)         a##b
@@ -181,11 +182,14 @@ typedef struct
 typedef struct
 {
     elevator_direction_t
-                direction;      /* direction elevator is moving               */
-    float       position;       /* position of elevator in feet               */
-    float       speed;          /* speed of eleveator in feet per second      */
+                dir;      /* direction elevator is moving               */
+    float       cur_pos;        /* current position of elevator in feet       */
+    float       dest_pos;       /* destination position of elevator in feet   */
+    float       speed;          /* current speed of eleveator in feet per second */
     int         max_speed;      /* maximum speed of elevator in feet per second */
-    int         acceleration;   /* acceleration of elevator in feet per second squared */
+    int         new_max_speed;  /* future value of max_speed                  */
+    int         accel;   /* acceleration of elevator in feet per second squared */
+    int         new_accel; /* future value of acceleration             */
 } elevator_movement_t;
 
 
@@ -217,7 +221,9 @@ void set_motor_leds( motor_led_state_t state );
 void set_estop( void );
 void clear_estop( void );
 void queue_elevator_movement( int floor );
-elevator_direction_t get_dir_to_dest_flr( int cur_pos, int dest_pos );
+elevator_direction_t get_dir_to_dest_flr( elevator_movement_t elev );
+int get_decel_pos( elevator_movement_t elev );
+
 float calc_position( float acceleration, float time, float previous_velocity );
 float calc_velocity( float acceleration, float time, float previous_velocity );
 

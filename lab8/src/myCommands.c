@@ -53,7 +53,6 @@ const xCommandLineInput xChangeMaximumSpeedCommand =
 portBASE_TYPE prvChangeMaximumSpeedCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
 {
     portBASE_TYPE xParameter1StringLength;
-//    extern int max_speed_fps;
 
     /* Obtain the LED number , and the length of its name, from the command string. */
     const int8_t *pcParameter1 = FreeRTOS_CLIGetParameter (
@@ -64,9 +63,9 @@ portBASE_TYPE prvChangeMaximumSpeedCommand( int8_t *pcWriteBuffer, size_t xWrite
                           /* Store the parameter string length. */
                           &xParameter1StringLength );
 
-    elevator.max_speed = atoi( pcParameter1 );
+    elevator.new_max_speed = atoi( pcParameter1 );
     
-    sprintf( pcWriteBuffer, "Maximum speed changed to %d feet/sec.\r\n", elevator.max_speed );
+    sprintf( pcWriteBuffer, "Maximum speed changed to %d feet/sec.\r\n", elevator.new_max_speed );
 
     return pdFALSE;
 }
@@ -85,7 +84,6 @@ const xCommandLineInput xChangeAccelerationCommand =
 portBASE_TYPE prvChangeAccelerationCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
 {
     portBASE_TYPE xParameter1StringLength;
-//    extern int accel_fpss;
 
     /* Obtain the LED number , and the length of its name, from the command string. */
     const int8_t *pcParameter1 = FreeRTOS_CLIGetParameter (
@@ -96,9 +94,9 @@ portBASE_TYPE prvChangeAccelerationCommand( int8_t *pcWriteBuffer, size_t xWrite
                           /* Store the parameter string length. */
                           &xParameter1StringLength );
 
-    elevator.acceleration = atoi( pcParameter1 );
+    elevator.new_accel = atoi( pcParameter1 );
 
-    sprintf( pcWriteBuffer, "Acceleration changed to %d feet/sec/sec.\r\n", elevator.acceleration );
+    sprintf( pcWriteBuffer, "Acceleration changed to %d feet/sec/sec.\r\n", elevator.new_accel );
 
     return pdFALSE;
 }
