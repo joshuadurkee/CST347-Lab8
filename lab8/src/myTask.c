@@ -160,11 +160,11 @@ void rxControlTask( void *params )
                 break;
             case P1_CALL_DN_CHAR:
             case P1_CALL_UP_CHAR:
-                queue_elevator_movement( P1 );
+                queue_elevator_movement( P1_FLOOR_POS );
                 transmit_string( "\n" );
                 break;
             case P2_CALL_CHAR:
-                queue_elevator_movement( P2 );
+                queue_elevator_movement( P2_FLOOR_POS );
                 transmit_string( "\n" );
                 break;
             case EM_STOP_CHAR:
@@ -258,7 +258,7 @@ void transmit_string( char *tx_ptr )
 }
 
 
-void send_elevator_status( floor_t destination_floor, bool is_moving )
+void send_elevator_status( int destination_floor, bool is_moving )
 {
     char movement_str[ 16 ];
     char floor_str[ 8 ];
@@ -271,13 +271,13 @@ void send_elevator_status( floor_t destination_floor, bool is_moving )
 
     switch( destination_floor )
     {
-        case GD:
+        case GD_FLOOR_POS:
             strcpy( floor_str, "GD" );
             break;
-        case P1:
+        case P1_FLOOR_POS:
             strcpy( floor_str, "P1" );
             break;
-        case P2:
+        case P2_FLOOR_POS:
             strcpy( floor_str, "P2" );
             break;
     }
@@ -289,13 +289,13 @@ void send_elevator_status( floor_t destination_floor, bool is_moving )
 
 
 // transmit elevator distance and speed status (prints integer values)
-void send_movement_status( float distance_f, float speed_fps )
+void send_movement_status( float position_f, float speed_fps )
 {
     char distance_str[ 8 ];
     char speed_str[ 8 ];
     char msg[ MSG_SIZE ];
 
-    itoa( distance_str, (int)distance_f, 10 );
+    itoa( distance_str, (int)position_f, 10 );
     itoa( speed_str, (int)speed_fps, 10 );
 
     // create message
@@ -503,38 +503,60 @@ void queue_elevator_movement( int floor )
 }
 
 
+float calc_velocity( float acceleration, float time, float previous_velocity )
+{
+    return ( acceleration * time ) + previous_velocity;
+}
+
+
 void elevatorMoveTask( void )
 {
     int     next_floor;
-    bool    en_route;
 
-    while(1)
+    while( 1 )
     {
+        // receive the next floor position to move to
         xQueueReceive( elevator_move_queue_handle, &next_floor, portMAX_DELAY );
 
-        en_route= true;
-
         // goto the next destination
-        while( en_route )
+        while( current_position_f != next_floor )
         {
-            ms_delay( ELEVATOR_UPDATE_INTERVAL );
+            ms_delay( ELEVATOR_UPDATE_INTERVAL_MS );
 
-            // check for emergency stop
             if( emergency_stop_flag )
             {
-                // prepare to move to ground floor
+                // override the destination with the ground floor
                 next_floor = GD_FLOOR_POS;
-                
-                // calculate the distance to the next floor
+            }                
+            
+            // TODO calculate updated position
+            current_position_f = 0;
+
+            // TODO calculate updated speed (determine whether to decelerate, stay at max speed, or accelerate)
+            current_speed_fps = calc_velocity( accel_fpss, current_speed_fps, ELEVATOR_UPDATE_INTERVAL );
+            current_speed_fps = MAX( current_speed_fps, max_speed_fps );
+
+            // display distance and speed status
+            send_elevator_status( next_floor, (bool)current_speed_fps );
+            send_movement_status( current_position_f, current_speed_fps );
+        }
+        
+        if( emergency_stop_flag )
+        {
+            open_door();
+
+            // wait for emergency clear to clear the estop flag
+            while( emergency_stop_flag )
+                ms_delay( EM_CLR_WAIT_MS );
+
+            // TODO clear queue when estop movement is complete (recovering from an estop event should clear the system)
 
 
-                // clear queue when estop movement is complete
-
-            }
-            else
-            {
-                
-            }
+            close_door();
+        }
+        else
+        {
+            operate_door();
         }
     }
 }

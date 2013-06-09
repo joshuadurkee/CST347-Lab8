@@ -91,6 +91,9 @@
 #define MAX_SPEED_FPS_DFLT  40
 #define ELEVATOR_UPDATE_INTERVAL \
                             500
+#define ELEVATOR_UPDATE_INTERVAL_MS \
+                            ( 500 / portTICK_RATE_MS )
+#define EM_CLR_WAIT_MS      ( 20 / portTICK_RATE_MS )
 
 // elevator positions
 #define GD_FLOOR_POS        0
@@ -113,6 +116,9 @@
 //
 // macros
 //
+
+#define MAX(x,y)            ( x > y ? x : y )
+#define MIN(x,y)            ( x < y ? x : y )
 
 /* helper macros */
 #define PASTE(a, b)         a##b
@@ -139,14 +145,6 @@ typedef struct
 
 
 // enumerated types
-typedef enum
-{
-    GD,                         /* ground floor                               */
-    P1,                         /* penthouse 1                                */
-    P2                          /* penthouse 2                                */
-} floor_t;
-
-
 typedef enum
 {
     UP,                         /* elevator moving up                         */
@@ -192,8 +190,8 @@ void motorControlTask( void );
 void ms_delay( int ms );
 int poll_buttons( void );
 void transmit_string( char *tx_ptr );
-void send_elevator_status( floor_t destination_floor, bool is_moving );
-void send_movement_status( float distance_f, float speed_fps );
+void send_elevator_status( int destination_floor, bool is_moving );
+void send_movement_status( float position_f, float speed_fps );
 void set_elevator_up_down_leds( elevator_movement_t led_state );
 void set_door_leds( door_movement_t state );
 void open_door( void );
