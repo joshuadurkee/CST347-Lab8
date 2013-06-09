@@ -557,8 +557,24 @@ void elevatorMoveTask( void )
             // determine position where deceleration should start in order to stop at destination floor
             calculated_decel_pos = get_decel_pos( elevator );
             
-            // TODO calculate updated position for dt=500ms
+            // calculate updated position for a time delta of 500ms
             // NOTE: this may include stopping acceleration or starting deceleration or both
+
+            // calculate new position and speed for case where stopped or accelerating
+
+                // if calculated position is beyond calculated_stop_accel_pos, perform second calculation
+
+                    // if second calculated position is beyond calculated_decel_pos, perform third calculation
+
+            // calculate new position and speed for case where at max speed (no acceleration/deceleration)
+
+                // if calculated position is beyond calculated_decel_pos, perform second calculation
+
+            // calculate new position and speed for case where decelerating
+
+
+
+
 //            elevator.cur_pos = 0;
 
             // determine if
