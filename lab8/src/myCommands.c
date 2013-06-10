@@ -19,33 +19,12 @@ extern elevator_movement_t elevator;
 
 
 /*----------------------------------------------------------------------
-    task-stats command
-----------------------------------------------------------------------*/
-const char taskListHdr[] = "Name\t\tStat\tPri\tS/Space\tTCB";
-
-const xCommandLineInput xTaskStatsCommand =
-{
-    "task-stats",
-    "task-stats: Displays a table of task state information\r\n",
-    prvTaskStatsCommand,
-    0
-};
-
-portBASE_TYPE prvTaskStatsCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
-{
-    sprintf( pcWriteBuffer, taskListHdr );
-    vTaskList( pcWriteBuffer + strlen( taskListHdr ) );
-
-    return pdFALSE;
-}
-
-/*----------------------------------------------------------------------
     S command (change max speed)
 ----------------------------------------------------------------------*/
 const xCommandLineInput xChangeMaximumSpeedCommand =
 {
     "S",
-    "Change Maximum Speed: changes the maximum speed of the elevator\r\n",
+    "S <num>: changes the maximum speed of the elevator\r\n",
     prvChangeMaximumSpeedCommand,
     1
 };
@@ -76,7 +55,7 @@ portBASE_TYPE prvChangeMaximumSpeedCommand( int8_t *pcWriteBuffer, size_t xWrite
 const xCommandLineInput xChangeAccelerationCommand =
 {
     "AP",
-    "Change Acceleration: changes the acceleration of the elevator\r\n",
+    "AP <num>: changes the acceleration of the elevator\r\n",
     prvChangeAccelerationCommand,
     1
 };
@@ -102,12 +81,58 @@ portBASE_TYPE prvChangeAccelerationCommand( int8_t *pcWriteBuffer, size_t xWrite
 }
 
 /*----------------------------------------------------------------------
+    SF command (send to floor)
+----------------------------------------------------------------------*/
+const xCommandLineInput xSendToFloorCommand =
+{
+    "SF",
+    "SF <1/2/3>: Sends the elevator to the designated floor\r\n",
+    prvSendToFloorCommand,
+    1
+};
+
+portBASE_TYPE prvSendToFloorCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
+{
+    portBASE_TYPE xParameter1StringLength;
+    int new_floor;
+
+    /* Obtain the LED number , and the length of its name, from the command string. */
+    const int8_t *pcParameter1 = FreeRTOS_CLIGetParameter (
+                          /* The command string itself. */
+                          pcCommandString,
+                          /* Return the first parameter. */
+                          1,
+                          /* Store the parameter string length. */
+                          &xParameter1StringLength );
+
+    new_floor = atoi( pcParameter1 );
+
+    switch( new_floor )
+    {
+        case 1:
+            queue_elevator_movement( GD_FLOOR_POS );
+            sprintf( pcWriteBuffer, "Sending elevator to ground floor.\r\n");
+            break;
+        case 2:
+            queue_elevator_movement( P1_FLOOR_POS );
+            sprintf( pcWriteBuffer, "Sending elevator to penthouse 1 floor.\r\n");
+            break;
+        case 3:
+            queue_elevator_movement( P2_FLOOR_POS );
+            sprintf( pcWriteBuffer, "Sending elevator to penthouse 2 floor.\r\n");
+            break;
+    }
+
+    return pdFALSE;
+}
+
+/*----------------------------------------------------------------------
     ES command (emergency stop)
 ----------------------------------------------------------------------*/
 const xCommandLineInput xEmergencyStopCommand =
 {
     "ES",
-    "Emergency Stop: sets the emergency stop flag, moving the elevator to the ground floor and holding the doors open till the flag is cleared\r\n",
+    "ES: sets the emergency stop flag, moving the elevator to the ground floor and holding the doors open till the flag is cleared\r\n",
     prvEmergencyStopCommand,
     0
 };
@@ -126,7 +151,7 @@ portBASE_TYPE prvEmergencyStopCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 const xCommandLineInput xEmergencyClearCommand =
 {
     "ER",
-    "Emergancy Clear: clears the emergency stop flag, allowing the elevator to resume normal operations\r\n",
+    "ER: clears the emergency stop flag, allowing the elevator to resume normal operations\r\n",
     prvEmergencyClearCommand,
     0
 };
@@ -135,6 +160,27 @@ portBASE_TYPE prvEmergencyClearCommand( int8_t *pcWriteBuffer, size_t xWriteBuff
 {
     clear_estop();
     sprintf( pcWriteBuffer, "Emergency clear triggered!\r\n");
+
+    return pdFALSE;
+}
+
+/*----------------------------------------------------------------------
+    task-stats command
+----------------------------------------------------------------------*/
+const char taskListHdr[] = "Name\t\tStat\tPri\tS/Space\tTCB";
+
+const xCommandLineInput xTaskStatsCommand =
+{
+    "task-stats",
+    "task-stats: Displays a table of task state information\r\n",
+    prvTaskStatsCommand,
+    0
+};
+
+portBASE_TYPE prvTaskStatsCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
+{
+    sprintf( pcWriteBuffer, taskListHdr );
+    vTaskList( pcWriteBuffer + strlen( taskListHdr ) );
 
     return pdFALSE;
 }
@@ -164,12 +210,13 @@ portBASE_TYPE prvRunTimeStatsCommand( int8_t *pcWriteBuffer, size_t xWriteBuffer
 // registers all CLI commands
 void register_commands( void )
 {
-    if( FreeRTOS_CLIRegisterCommand( &xTaskStatsCommand ) == pdFAIL
-     || FreeRTOS_CLIRegisterCommand( &xChangeMaximumSpeedCommand ) == pdFAIL
-     || FreeRTOS_CLIRegisterCommand( &xChangeAccelerationCommand ) == pdFAIL
-     || FreeRTOS_CLIRegisterCommand( &xEmergencyStopCommand ) == pdFAIL
-     || FreeRTOS_CLIRegisterCommand( &xEmergencyClearCommand ) == pdFAIL
-     || FreeRTOS_CLIRegisterCommand( &xRunTimeStatsCommand ) == pdFAIL )
+    if( FreeRTOS_CLIRegisterCommand( &xChangeMaximumSpeedCommand )  == pdFAIL
+     || FreeRTOS_CLIRegisterCommand( &xChangeAccelerationCommand )  == pdFAIL
+     || FreeRTOS_CLIRegisterCommand( &xSendToFloorCommand )         == pdFAIL
+     || FreeRTOS_CLIRegisterCommand( &xEmergencyStopCommand )       == pdFAIL
+     || FreeRTOS_CLIRegisterCommand( &xEmergencyClearCommand )      == pdFAIL
+     || FreeRTOS_CLIRegisterCommand( &xTaskStatsCommand )           == pdFAIL
+     || FreeRTOS_CLIRegisterCommand( &xRunTimeStatsCommand )        == pdFAIL )
     {
         // error registering commands
         while( 1 );
