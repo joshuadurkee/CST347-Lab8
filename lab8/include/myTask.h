@@ -233,10 +233,9 @@ int get_decel_pos( elevator_movement_t elev );
 float calc_pos_with_accel( elevator_movement_t elev );
 float calc_pos_with_const_speed( elevator_movement_t elev );
 float calc_pos_with_decel( elevator_movement_t elev );
-
+bool beyond_stop_accel_pos( elevator_movement_t elev );
+bool beyond_decel_pos( elevator_movement_t elev );
 float calc_pos( elevator_movement_t elev );
-
-//float calc_velocity( float acceleration, float time, float previous_velocity );
 
 
 #endif	/* MYTASK_H */

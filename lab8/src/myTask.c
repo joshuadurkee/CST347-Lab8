@@ -744,6 +744,44 @@ float calc_pos_with_decel( elevator_movement_t elev )
 }
 
 
+bool beyond_stop_accel_pos( elevator_movement_t elev )
+{
+    switch( elev.dir )
+    {
+        case UP:
+            if( elev.cur_pos > elev.stop_accel_pos )
+                return true;
+            else
+                return false;
+        case DOWN:
+            if( elev.cur_pos < elev.stop_accel_pos )
+                return true;
+            else
+                return false;
+    }
+    return false;
+}
+
+
+bool beyond_decel_pos( elevator_movement_t elev )
+{
+    switch( elev.dir )
+    {
+        case UP:
+            if( elev.cur_pos > elev.decel_pos )
+                return true;
+            else
+                return false;
+        case DOWN:
+            if( elev.cur_pos < elev.decel_pos )
+                return true;
+            else
+                return false;
+    }
+    return false;
+}
+
+
 float calc_pos( elevator_movement_t elev )
 {
     float calc_pos;
@@ -751,29 +789,51 @@ float calc_pos( elevator_movement_t elev )
     // calculate position/speed
     switch( elev.move_state )
     {
-        case ACCEL_STATE:
+        case ACCEL_STATE:       // calculate new position and speed for case where stopped or accelerating
+            calc_pos = calc_pos_with_accel( elevator );
 
-            
-            // TODO take into account direction
+            // TODO calculate speed
+
             // check if beyond stop_accel_pos or decel_pos
-            if( elev.cur_pos > elev.decel_pos )
+            if( beyond_decel_pos( elevator ) )
+            {
                 elev.move_state = DECEL_STATE;
+
+                // constrain position
+                calc_pos = elev.decel_pos;
+            }
+            else if( beyond_stop_accel_pos( elevator ) )
+            {
+                elev.move_state = CONST_STATE;
+                
+                // constrain position
+                calc_pos = elev.stop_accel_pos;
+            }
             break;
         case CONST_STATE:
             calc_pos = calc_pos_with_const_speed( elevator );
 
-            // TODO take into account direction
+            // TODO calculate speed
+
             // check if beyond decel_pos
-            if( elev.cur_pos > elev.decel_pos )
+            if( beyond_decel_pos( elevator ) )
+            {
                 elev.move_state = DECEL_STATE;
+
+                // constrain position
+                calc_pos = elev.decel_pos;
+            }
             break;
         case DECEL_STATE:
+            calc_pos = calc_pos_with_decel( elevator );
+            
+            // TODO calculate speed
 
             break;
 
 
     }
-    // calculate new position and speed for case where stopped or accelerating
+    
 
 
         // if calculated position is beyond calculated_stop_accel_pos, perform second calculation
