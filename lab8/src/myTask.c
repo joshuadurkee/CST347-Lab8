@@ -29,7 +29,10 @@ extern xSemaphoreHandle inputByteBuffer;
 
 elevator_movement_t elevator =
 {
+    ACCEL_STATE,
     STOP,
+    (float)GD_FLOOR_POS,
+    (float)GD_FLOOR_POS,
     (float)GD_FLOOR_POS,
     (float)GD_FLOOR_POS,
     0.0f,
@@ -353,7 +356,7 @@ void set_door_leds( door_movement_t state )
 
 void open_door( void )
 {
-    if( elevator.dir != STOP )
+    if( elevator.dir == STOP )
     {
         set_door_leds( CLOSED );
         ms_delay( DOOR_STATE_DURATION_MS );
@@ -523,6 +526,13 @@ void elevatorMoveTask( void )
         elevator.dest_pos = (float)next_floor_pos;
         elevator.dir = get_dir_to_dest_flr( elevator );
 
+        // determine position where acceleration should stop in order to not exceed max speed
+        // and to meet requirements to start decelerating in time to stop at destination floor
+        elevator.stop_accel_pos = get_stop_accel_pos( elevator );
+
+        // determine position where deceleration should start in order to stop at destination floor
+        elevator.decel_pos = get_decel_pos( elevator );
+
         elevator.move_state = ACCEL_STATE;
 
         /* set static acceleration and max speed for each move of the elevator,
@@ -558,13 +568,6 @@ void elevatorMoveTask( void )
                 // NOTE: updating deceleration position is not necessary as this will occur
                 //       after next xQueueReceive (either previously queued or queued by set_estop function)
             }
-
-            // determine position where acceleration should stop in order to not exceed max speed
-            // and to meet requirements to start decelerating in time to stop at destination floor
-            elevator.stop_accel_pos = get_stop_accel_pos( elevator );
-
-            // determine position where deceleration should start in order to stop at destination floor
-            elevator.decel_pos = get_decel_pos( elevator );
             
             // calculate updated position for a time delta of 500ms
             // NOTE: this may include stopping acceleration or starting deceleration or both
@@ -597,6 +600,8 @@ void elevatorMoveTask( void )
                 elevator.speed = 0;
                 elevator.dir = STOP;
                 elevator.cur_pos = elevator.dest_pos;
+                send_elevator_status( elevator.dest_pos, (bool)elevator.speed );
+                set_elevator_up_down_leds( STOP );
             }
         }
 
@@ -794,14 +799,14 @@ float calc_pos( elevator_movement_t elev )
             // check if beyond stop_accel_pos or decel_pos
             if( beyond_decel_pos( elevator ) )
             {
-                elev.move_state = DECEL_STATE;
+                elevator.move_state = DECEL_STATE;
 
                 // constrain position
                 calc_pos = elev.decel_pos;
             }
             else if( beyond_stop_accel_pos( elevator ) )
             {
-                elev.move_state = CONST_STATE;
+                elevator.move_state = CONST_STATE;
                 
                 // constrain position
                 calc_pos = elev.stop_accel_pos;
@@ -815,7 +820,7 @@ float calc_pos( elevator_movement_t elev )
             // check if beyond decel_pos
             if( beyond_decel_pos( elevator ) )
             {
-                elev.move_state = DECEL_STATE;
+                elevator.move_state = DECEL_STATE;
 
                 // constrain position
                 calc_pos = elev.decel_pos;
