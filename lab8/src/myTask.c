@@ -508,8 +508,6 @@ void queue_elevator_movement( int floor )
 void elevatorMoveTask( void )
 {
     int     next_floor_pos;
-//    int     calculated_stop_accel_pos;
-//    int     calculated_decel_pos;
     elevator_direction_t
             calculated_dir;
     int     iter = 0;
@@ -556,7 +554,6 @@ void elevatorMoveTask( void )
             if( elevator.dir != STOP && elevator.dir != calculated_dir )
             {
                 // TODO deccelerate immediately in order to change direction
-
 
                 // NOTE: updating deceleration position is not necessary as this will occur
                 //       after next xQueueReceive (either previously queued or queued by set_estop function)
@@ -826,6 +823,11 @@ float calc_pos( elevator_movement_t elev )
             break;
         case DECEL_STATE:
             calc_pos = calc_pos_with_decel( elevator );
+
+            // ensure small errors don't cause elevator to not reach destination floor,
+            // if elevator is more than 95% of DECEL_STATE, add an extra 0.5 ft
+            if( ABS( calc_pos - elev.dest_pos ) < 0.05f * ABS( elev.dest_pos - elev.decel_pos ) )
+                calc_pos += 0.5f;
             
             // TODO calculate speed
 
