@@ -40,15 +40,13 @@
 
 #define MSG_SIZE            50
 
-#define LED_QUEUE_DEPTH     5
-#define TX_QUEUE_DEPTH      20
-#define ELEVATOR_MOVE_QUEUE_DEPTH 20
-#define LED_QUEUE_SIZE      sizeof( int )
-#define TX_QUEUE_SIZE       ( MSG_SIZE * sizeof( char ) )
-#define ELEVATOR_MOVE_QUEUE_SIZE sizeof( int )
-#define QUEUE_WAIT_MS       ( 10 / portTICK_RATE_MS )
-
-#define SEM_WAIT_MS         ( 10 / portTICK_RATE_MS )
+#define LED_QUEUE_DEPTH             5
+#define TX_QUEUE_DEPTH              20
+#define ELEVATOR_MOVE_QUEUE_DEPTH   20
+#define LED_QUEUE_SIZE              sizeof( int )
+#define TX_QUEUE_SIZE               ( MSG_SIZE * sizeof( char ) )
+#define ELEVATOR_MOVE_QUEUE_SIZE    sizeof( int )
+#define QUEUE_WAIT_MS               ( 10 / portTICK_RATE_MS )
 
 #define NUM_SWITCHES        3
 #define NUM_LEDS            3
@@ -87,30 +85,27 @@
 #define DOWN_LED_PORT       B
 
 // elevator movement
-#define ACCEL_FPSS_DFLT     2
-#define MAX_SPEED_FPS_DFLT  40
-#define ELEVATOR_UPDATE_INTERVAL_MS \
-                            500
-#define ELEVATOR_UPDATE_INTERVAL_S \
-                            0.5f
-#define EM_CLR_WAIT_MS      20
+#define ACCEL_FPSS_DFLT                 2
+#define MAX_SPEED_FPS_DFLT              40
+#define ELEVATOR_PROCESS_INTERVAL_MS    10
+#define ELEVATOR_UPDATE_INTERVAL_MS     500
+#define ELEVATOR_PROCESS_INTERVAL_S     ( (float)ELEVATOR_PROCESS_INTERVAL_MS / 1000.0f )
+#define EM_CLR_WAIT_MS                  20
+#define ELEVATOR_UPDATE_INTERVAL_CNT    ( ELEVATOR_UPDATE_INTERVAL_MS / ELEVATOR_PROCESS_INTERVAL_MS )
 
 // elevator positions
-#define GD_FLOOR_POS        0
-#define P1_FLOOR_POS        500
-#define P2_FLOOR_POS        510
+#define GD_FLOOR_POS                    0
+#define P1_FLOOR_POS                    500
+#define P2_FLOOR_POS                    510
 
 // door movement
-#define DOOR_SEQUENCE_DURATION_MS \
-                            ( 1000 / portTICK_RATE_MS )
-#define DOOR_STATE_DURATION_MS \
-                            ( DOOR_SEQUENCE_DURATION_MS / NUM_DOOR_STATES )
-#define DOOR_OPEN_DURATION_MS \
-                            ( 5000 / portTICK_RATE_MS )
+#define DOOR_SEQUENCE_DURATION_MS       1000
+#define DOOR_STATE_DURATION_MS          ( DOOR_SEQUENCE_DURATION_MS / NUM_DOOR_STATES )
+#define DOOR_OPEN_DURATION_MS           5000
 
 // motor control
-#define MOTOR_CONTROL_BASE_DELAY    10000
-#define MOTOR_CONTROL_DELAY_FACTOR  10
+#define MOTOR_CONTROL_BASE_DELAY        10000
+#define MOTOR_CONTROL_DELAY_FACTOR      10
 
 
 //

@@ -531,6 +531,7 @@ void elevatorMoveTask( void )
     int     calculated_decel_pos;
     elevator_direction_t
             calculated_dir;
+    int     iter = 0;
 
     while( 1 )
     {
@@ -540,7 +541,7 @@ void elevatorMoveTask( void )
         // TEST
         elevator.speed = 35;
 
-        elevator.dest_pos = next_floor_pos;
+        elevator.dest_pos = (float)next_floor_pos;
 
         /* set static acceleration and max speed for each move of the elevator,
          * this is necessary as using a dynamic acceleration could result in an
@@ -554,7 +555,8 @@ void elevatorMoveTask( void )
         // goto the next destination
         while( elevator.cur_pos != elevator.dest_pos )
         {
-            ms_delay( ELEVATOR_UPDATE_INTERVAL_MS );
+            ms_delay( ELEVATOR_PROCESS_INTERVAL_MS );
+            iter++;
 
             if( emergency_stop_flag )
             {
@@ -593,15 +595,17 @@ void elevatorMoveTask( void )
 //            elevator.speed = calc_velocity( elevator.accel, elevator.speed, ELEVATOR_UPDATE_INTERVAL_MS );
 //            elevator.speed = MAX( elevator.speed, elevator.max_speed );
 
-//            if( elevator.cur_pos != elevator.dest_pos )
-//            {
+            if( iter == ELEVATOR_UPDATE_INTERVAL_CNT )
+            {
+                iter = 0;
+
                 // display direction LEDs
                 set_elevator_up_down_leds( elevator.dir );
 
                 // display distance and speed status
                 send_elevator_status( elevator.dest_pos, (bool)elevator.speed );
                 send_movement_status( elevator.cur_pos, elevator.speed );
-//            }
+            }
 
             // determine if elevator has reached the destination
             if( elevator.cur_pos == elevator.dest_pos
@@ -716,7 +720,7 @@ float calc_pos_with_accel( elevator_movement_t elev )
     float calc_dis;
     float calc_pos;
 
-    calc_dis = ( elev.speed * ELEVATOR_UPDATE_INTERVAL_S ) + ( elev.accel * SQRD( ELEVATOR_UPDATE_INTERVAL_S ) ) / 2;
+    calc_dis = ( elev.speed * ELEVATOR_PROCESS_INTERVAL_S ) + ( elev.accel * SQRD( ELEVATOR_PROCESS_INTERVAL_S ) ) / 2;
     calc_dis *= elev.dir;
 
     calc_pos = elev.cur_pos + calc_dis;
@@ -730,7 +734,7 @@ float calc_pos_with_const_speed( elevator_movement_t elev )
     float calc_dis;
     float calc_pos;
 
-    calc_dis = elev.speed * ELEVATOR_UPDATE_INTERVAL_S;
+    calc_dis = elev.speed * ELEVATOR_PROCESS_INTERVAL_S;
     calc_dis *= elev.dir;
 
     calc_pos = elev.cur_pos + calc_dis;
@@ -744,7 +748,7 @@ float calc_pos_with_decel( elevator_movement_t elev )
     float calc_dis;
     float calc_pos;
 
-    calc_dis = ( elev.speed * ELEVATOR_UPDATE_INTERVAL_S ) + ( -elev.accel * SQRD( ELEVATOR_UPDATE_INTERVAL_S ) ) / 2;
+    calc_dis = ( elev.speed * ELEVATOR_PROCESS_INTERVAL_S ) + ( -elev.accel * SQRD( ELEVATOR_PROCESS_INTERVAL_S ) ) / 2;
     calc_dis *= elev.dir;
 
     calc_pos = elev.cur_pos + calc_dis;
