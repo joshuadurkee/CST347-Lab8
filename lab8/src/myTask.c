@@ -106,10 +106,10 @@ void pollButtonControlTask( void *params )
             switch( button_pressed )
             {
                 case OPEN_BUTTON_BIT:               // open button pressed
-                    mPORTDToggleBits( DOOR_LED_2_BIT );
+                    operate_door();
                     break;                
                 case CLOSE_BUTTON_BIT:              // close button pressed
-                    mPORTDToggleBits( DOOR_LED_0_BIT );
+                    close_door();
                     break;
             }
         }
@@ -353,17 +353,20 @@ void set_door_leds( door_movement_t state )
 
 void open_door( void )
 {
-    set_door_leds( CLOSED );
-    ms_delay( DOOR_STATE_DURATION_MS );
+    if( elevator.dir != STOP )
+    {
+        set_door_leds( CLOSED );
+        ms_delay( DOOR_STATE_DURATION_MS );
 
-    set_door_leds( MOSTLY_CLOSED );
-    ms_delay( DOOR_STATE_DURATION_MS );
+        set_door_leds( MOSTLY_CLOSED );
+        ms_delay( DOOR_STATE_DURATION_MS );
 
-    set_door_leds( MOSTLY_OPEN );
-    ms_delay( DOOR_STATE_DURATION_MS );
+        set_door_leds( MOSTLY_OPEN );
+        ms_delay( DOOR_STATE_DURATION_MS );
 
-    set_door_leds( OPEN );
-    ms_delay( DOOR_STATE_DURATION_MS );
+        set_door_leds( OPEN );
+        ms_delay( DOOR_STATE_DURATION_MS );
+    }
 }
 
 
@@ -402,6 +405,9 @@ bool close_door( void )
 }
 
 
+// FIXME the RC2 button should be able to close the door in which case this function should return.
+//       a potential solution would be to create a door_open flag and check it with an ms_delay of 10ms,
+//       looping over it until DOOR_OPEN_DURATION_MS has lapsed.
 // open and close door (until closing door succeeds)
 void operate_door( void )
 {
@@ -587,6 +593,7 @@ void elevatorMoveTask( void )
              || get_dir_to_dest_flr( elevator ) != elevator.dir )
             {
                 elevator.speed = 0;
+                elevator.dir = STOP;
                 elevator.cur_pos = elevator.dest_pos;
             }
         }
