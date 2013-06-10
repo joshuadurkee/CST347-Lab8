@@ -655,7 +655,7 @@ int get_stop_accel_pos( elevator_movement_t elev )
 
     // determine the acceleration distance needed when moving from zero to maximum speed,
     // this is a kinmatic equation
-    stop_accel_dist_for_max_speed = SQRD( elev.max_speed ) / ( 2 * elev.accel );
+    stop_accel_dist_for_max_speed = SQRT( (float)elev.max_speed ) / ( 2.0f * (float)elev.accel );
 
     // calculate position relative from current (start) position
     stop_accel_pos_for_max_speed = elev.cur_pos + ( stop_accel_dist_for_max_speed * elev.dir );
@@ -686,7 +686,7 @@ int get_decel_pos( elevator_movement_t elev )
 
     // determine the deceleration distance needed when moving from maximum speed to zero,
     // this is a kinmatic equation
-    decel_dist_for_max_speed = - SQRD( elev.max_speed ) / ( 2 * elev.accel );
+    decel_dist_for_max_speed = - SQRT( (float)elev.max_speed ) / ( 2.0f * (float)elev.accel );
 
     // calculate position relative from destination position
     decel_pos_for_max_speed = elev.dest_pos + ( decel_dist_for_max_speed * elev.dir );
@@ -706,7 +706,7 @@ float calc_pos_with_accel( elevator_movement_t elev )
     float calc_dis;
     float calc_pos;
 
-    calc_dis = ( elev.speed * ELEVATOR_PROCESS_INTERVAL_S ) + ( elev.accel * SQRD( ELEVATOR_PROCESS_INTERVAL_S ) ) / 2;
+    calc_dis = ( elev.speed * ELEVATOR_PROCESS_INTERVAL_S ) + ( elev.accel * SQRT( ELEVATOR_PROCESS_INTERVAL_S ) ) / 2;
     calc_dis *= elev.dir;
 
     calc_pos = elev.cur_pos + calc_dis;
@@ -729,12 +729,13 @@ float calc_pos_with_const_speed( elevator_movement_t elev )
 }
 
 
+// TODO verify correctness (not sure of minus at -elev.accel)
 float calc_pos_with_decel( elevator_movement_t elev )
 {
     float calc_dis;
     float calc_pos;
 
-    calc_dis = ( elev.speed * ELEVATOR_PROCESS_INTERVAL_S ) + ( -elev.accel * SQRD( ELEVATOR_PROCESS_INTERVAL_S ) ) / 2;
+    calc_dis = ( elev.speed * ELEVATOR_PROCESS_INTERVAL_S ) + ( -elev.accel * SQRT( ELEVATOR_PROCESS_INTERVAL_S ) ) / 2;
     calc_dis *= elev.dir;
 
     calc_pos = elev.cur_pos + calc_dis;
@@ -829,21 +830,7 @@ float calc_pos( elevator_movement_t elev )
             // TODO calculate speed
 
             break;
-
-
     }
-    
-
-
-        // if calculated position is beyond calculated_stop_accel_pos, perform second calculation
-
-            // if second calculated position is beyond calculated_decel_pos, perform third calculation
-
-    // calculate new position and speed for case where at max speed (no acceleration/deceleration)
-
-        // if calculated position is beyond calculated_decel_pos, perform second calculation
-
-    // calculate new position and speed for case where decelerating
 
     return calc_pos;
 }

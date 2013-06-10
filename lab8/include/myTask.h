@@ -116,7 +116,7 @@
 #define AVG(x,y)            (  ( x + y ) / 2  )
 #define MAX(x,y)            (  x > y ? x : y  )
 #define MIN(x,y)            (  x < y ? x : y  )
-#define SQRD(x)             (  ( x ) * ( x )  )
+#define SQRT(x)             (  ( x ) * ( x )  )
 
 /* helper macros */
 #define PASTE(a, b)         a##b
