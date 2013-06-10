@@ -16,18 +16,15 @@
 // variables
 extern xTaskHandle irq_button_task_handle;
 extern xTaskHandle poll_button_task_handle;
-extern xTaskHandle led_task_handle[ NUM_LEDS ];
 extern xTaskHandle tx_task_handle;
 extern xTaskHandle rx_task_handle;
 extern xTaskHandle elevator_move_task_handle;
 extern xTaskHandle motor_control_task_handle;
 
-extern xQueueHandle led_queue_handle[ NUM_LEDS ];
 extern xQueueHandle tx_queue_handle;
 extern xQueueHandle elevator_move_queue_handle;
 
 extern xSemaphoreHandle buttonPress;
-extern xSemaphoreHandle ledNAction[ NUM_LEDS ];
 extern xSemaphoreHandle inputByteBuffer;
 
 elevator_movement_t elevator =
@@ -44,8 +41,6 @@ elevator_movement_t elevator =
 
 static bool door_interference_flag = false;
 static bool emergency_stop_flag    = false;
-
-static task_parameter_t task_parameter;
 
 
 void irqButtonControlTask( void *params )
@@ -71,7 +66,6 @@ void irqButtonControlTask( void *params )
             // check if button is released to give the semaphore (this causes the LED to toggle)
             if( !button_pressed[ i ] && button_pressed_old[ i ] )
             {
-                xSemaphoreGive( ledNAction[ i ] );
                 switch( i )
                 {
                     case 0:
@@ -111,33 +105,14 @@ void pollButtonControlTask( void *params )
         {
             switch( button_pressed )
             {
-                // open button pressed, toggle LED 2
-                case OPEN_BUTTON_BIT:
+                case OPEN_BUTTON_BIT:               // open button pressed
                     mPORTDToggleBits( DOOR_LED_2_BIT );
-                    break;
-
-                // close button pressed, toggle LED 0
-                case CLOSE_BUTTON_BIT:
+                    break;                
+                case CLOSE_BUTTON_BIT:              // close button pressed
                     mPORTDToggleBits( DOOR_LED_0_BIT );
                     break;
             }
         }
-    }
-}
-
-
-void ledControlTask( void *params )
-{
-    int     task_led;
-
-    task_led = *( (int *)params );
-
-    while( 1 )
-    {
-        xSemaphoreTake( ledNAction[ task_led ], portMAX_DELAY );
-
-        // toggle LED
-        mPORTDToggleBits( 1 << task_led );
     }
 }
 

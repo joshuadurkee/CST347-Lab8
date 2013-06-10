@@ -181,12 +181,6 @@ typedef enum                        //                 ****************
 // stuctures
 //
 
-typedef struct
-{
-    int num;                    /* The number of the LED to toggle, from 0-2. */
-    int rate;                   /* The rate at which the LED should be toggle, in milliseconds. */
-} task_parameter_t;
-
 
 typedef struct
 {

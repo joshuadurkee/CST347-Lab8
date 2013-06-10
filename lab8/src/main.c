@@ -105,7 +105,6 @@ convert a time in milliseconds into a time in ticks. */
 // task priorities
 #define IRQ_BUTTON_TASK_PRIORITY    1
 #define POLL_BUTTON_TASK_PRIORITY   1
-#define LED_TASK_PRIORITY           1
 #define TX_TASK_PRIORITY            1
 #define RX_TASK_PRIORITY            1
 #define ELEVATOR_MOVE_TASK_PRIORITY 1
@@ -114,18 +113,15 @@ convert a time in milliseconds into a time in ticks. */
 // variables
 xTaskHandle irq_button_task_handle;
 xTaskHandle poll_button_task_handle;
-xTaskHandle led_task_handle[ NUM_LEDS ];
 xTaskHandle tx_task_handle;
 xTaskHandle rx_task_handle;
 xTaskHandle elevator_move_task_handle;
 xTaskHandle motor_control_task_handle;
 
-xQueueHandle led_queue_handle[ NUM_LEDS ];
 xQueueHandle tx_queue_handle;
 xQueueHandle elevator_move_queue_handle;
 
 xSemaphoreHandle buttonPress;
-xSemaphoreHandle ledNAction[ NUM_LEDS ];
 xSemaphoreHandle inputByteBuffer;
 xSemaphoreHandle outputStringBuffer;
 
@@ -135,9 +131,6 @@ static void prv_setup_hardware(void);
 /*-----------------------------------------------------------*/
 int main(void)
 {
-    int     i;
-    int     task_parameter[ NUM_LEDS ] = { 0, 1, 2 };
-
     /* Perform any hardware initialisation that may be necessary. */
     prv_setup_hardware();
 
@@ -160,19 +153,6 @@ int main(void)
                     POLL_BUTTON_TASK_PRIORITY,
                     &poll_button_task_handle
                );
-
-    for( i = 0; i < NUM_LEDS; i++ )
-    {
-        // create led control tasks
-        xTaskCreate(
-                        ledControlTask,
-                        "LED task controller",
-                        configMINIMAL_STACK_SIZE,
-                        (void *) &task_parameter[ i ],
-                        LED_TASK_PRIORITY,
-                        &led_task_handle[ i ]
-                   );
-    }
 
     // create Tx control task
     xTaskCreate(
@@ -216,16 +196,8 @@ int main(void)
 
     // create binary semaphores which are safe to call with xSemaphoreGiveFromISR()
     vSemaphoreCreateBinary( buttonPress );
-    vSemaphoreCreateBinary( ledNAction[ 0 ] );
-    vSemaphoreCreateBinary( ledNAction[ 1 ] );
-    vSemaphoreCreateBinary( ledNAction[ 2 ] );
     vSemaphoreCreateBinary( inputByteBuffer );
     vSemaphoreCreateBinary( outputStringBuffer );
-
-    // set semaphores as "taken"
-    xSemaphoreTake( ledNAction[ 0 ], portMAX_DELAY );
-    xSemaphoreTake( ledNAction[ 1 ], portMAX_DELAY );
-    xSemaphoreTake( ledNAction[ 2 ], portMAX_DELAY );
 
     vTaskSuspend( rx_task_handle );
     vTaskSuspend( motor_control_task_handle );
