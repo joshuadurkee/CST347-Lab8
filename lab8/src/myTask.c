@@ -644,24 +644,23 @@ elevator_direction_t get_dir_to_dest_flr( elevator_movement_t elev )
 int get_stop_accel_pos( elevator_movement_t elev )
 {
     float   halfway_pos;
-    float   delta_halfway_pos;
+    float   halfway_dist;
     float   stop_accel_pos_for_max_speed;
-    float   delta_stop_accel_pos_for_max_speed;
+    float   stop_accel_dist_for_max_speed;
     float   stop_accel_pos;
 
     // determine position half way between current position and destination floor
     halfway_pos = AVG( elev.cur_pos, elev.dest_pos );
+    halfway_dist = ABS( elev.cur_pos - halfway_pos );
 
-    // determine the acceleration position needed when moving from zero to maximum speed,
+    // determine the acceleration distance needed when moving from zero to maximum speed,
     // this is a kinmatic equation
-    // TODO set as function of direction
-    stop_accel_pos_for_max_speed = SQRD( elev.max_speed ) / ( 2 * elev.accel );
+    stop_accel_dist_for_max_speed = SQRD( elev.max_speed ) / ( 2 * elev.accel );
 
-    // set acceleration position to halfway point if closer to destination floor
-    delta_halfway_pos = ABS( elev.cur_pos - halfway_pos );
-    delta_stop_accel_pos_for_max_speed = ABS( elev.cur_pos - stop_accel_pos_for_max_speed );
+    // calculate position relative from current (start) position
+    stop_accel_pos_for_max_speed = elev.cur_pos + ( stop_accel_dist_for_max_speed * elev.dir );
 
-    if( delta_halfway_pos < delta_stop_accel_pos_for_max_speed )
+    if( halfway_dist < ABS( stop_accel_dist_for_max_speed ) )
         stop_accel_pos = halfway_pos;
     else
         stop_accel_pos = stop_accel_pos_for_max_speed;
@@ -676,24 +675,24 @@ int get_stop_accel_pos( elevator_movement_t elev )
 int get_decel_pos( elevator_movement_t elev )
 {
     float   halfway_pos;
-    float   delta_halfway_pos;
+    float   halfway_dist;
     float   decel_pos_for_max_speed;
-    float   delta_decel_pos_for_max_speed;
+    float   decel_dist_for_max_speed;
     float   decel_pos;
 
     // determine position half way between current position and destination floor
     halfway_pos = AVG( elev.cur_pos, elev.dest_pos );
+    halfway_dist = ABS( elev.dest_pos - halfway_pos );
 
-    // determine the deceleration position needed when moving at maximum speed,
+    // determine the deceleration distance needed when moving from maximum speed to zero,
     // this is a kinmatic equation
-    // TODO set as function of direction
-    decel_pos_for_max_speed = SQRD( elev.max_speed ) / ( 2 * elev.accel );
+    decel_dist_for_max_speed = - SQRD( elev.max_speed ) / ( 2 * elev.accel );
+
+    // calculate position relative from destination position
+    decel_pos_for_max_speed = elev.dest_pos + ( decel_dist_for_max_speed * elev.dir );
 
     // set deceleration position to halfway point if closer to destination floor
-    delta_halfway_pos = ABS( elev.dest_pos - halfway_pos );
-    delta_decel_pos_for_max_speed = ABS( elev.dest_pos - decel_pos_for_max_speed );
-
-    if( delta_halfway_pos < delta_decel_pos_for_max_speed )
+    if( halfway_dist < ABS( decel_dist_for_max_speed ) )
         decel_pos = halfway_pos;
     else
         decel_pos = decel_pos_for_max_speed;
