@@ -508,12 +508,12 @@ void queue_elevator_movement( int floor )
 void elevatorMoveTask( void )
 {
     int     next_floor_pos;
-    int     calculated_stop_accel_pos;
-    int     calculated_decel_pos;
+//    int     calculated_stop_accel_pos;
+//    int     calculated_decel_pos;
     elevator_direction_t
             calculated_dir;
     int     iter = 0;
-
+    
     while( 1 )
     {
         // receive the next floor position to move to
@@ -523,13 +523,15 @@ void elevatorMoveTask( void )
         elevator.speed = 35;
 
         elevator.dest_pos = (float)next_floor_pos;
+        elevator.dir = get_dir_to_dest_flr( elevator );
+
+        elevator.move_state = ACCEL_STATE;
 
         /* set static acceleration and max speed for each move of the elevator,
          * this is necessary as using a dynamic acceleration could result in an
          * elevator not being able to decelerate quickly enough to prevent a crash */
         elevator.max_speed = elevator.new_max_speed;
         elevator.accel = elevator.new_accel;
-        elevator.dir = get_dir_to_dest_flr( elevator );
 
         vTaskResume( motor_control_task_handle );
 
@@ -548,7 +550,9 @@ void elevatorMoveTask( void )
             // determine direction to destination floor
             calculated_dir = get_dir_to_dest_flr( elevator );
 
-            // determine if moving in wrong direction to destination floor, as estop overrides destination
+            // FIXME fix for estop case
+            // determine if moving in wrong direction to destination floor, could
+            // be caused by overshoot or estop (as estop overrides destination)
             if( elevator.dir != STOP && elevator.dir != calculated_dir )
             {
                 // TODO deccelerate immediately in order to change direction
@@ -560,17 +564,16 @@ void elevatorMoveTask( void )
 
             // determine position where acceleration should stop in order to not exceed max speed
             // and to meet requirements to start decelerating in time to stop at destination floor
-            calculated_stop_accel_pos = get_stop_accel_pos( elevator );
+            elevator.stop_accel_pos = get_stop_accel_pos( elevator );
 
             // determine position where deceleration should start in order to stop at destination floor
-            calculated_decel_pos = get_decel_pos( elevator );
+            elevator.decel_pos = get_decel_pos( elevator );
             
             // calculate updated position for a time delta of 500ms
             // NOTE: this may include stopping acceleration or starting deceleration or both
 //            elevator.cur_pos = calc_pos( elevator );
 
-            // TEST
-            elevator.cur_pos = calc_pos_with_const_speed( elevator );
+            elevator.cur_pos = calc_pos( elevator );
 
             // TODO calculate current speed
 //            elevator.speed = calc_velocity( elevator.accel, elevator.speed, ELEVATOR_UPDATE_INTERVAL_MS );
@@ -588,7 +591,9 @@ void elevatorMoveTask( void )
                 send_movement_status( elevator.cur_pos, elevator.speed );
             }
 
-            // determine if elevator has reached the destination
+            // FIXME this can also be cause by estop changing direction for new destination floor
+            //       fix with FIXME above
+            // determine if elevator has reached the destination (or overshot)
             if( elevator.cur_pos == elevator.dest_pos
              || get_dir_to_dest_flr( elevator ) != elevator.dir )
             {
@@ -743,6 +748,31 @@ float calc_pos( elevator_movement_t elev )
 {
     float calc_pos;
 
+    // calculate position/speed
+    switch( elev.move_state )
+    {
+        case ACCEL_STATE:
+
+            
+            // TODO take into account direction
+            // check if beyond stop_accel_pos or decel_pos
+            if( elev.cur_pos > elev.decel_pos )
+                elev.move_state = DECEL_STATE;
+            break;
+        case CONST_STATE:
+            calc_pos = calc_pos_with_const_speed( elevator );
+
+            // TODO take into account direction
+            // check if beyond decel_pos
+            if( elev.cur_pos > elev.decel_pos )
+                elev.move_state = DECEL_STATE;
+            break;
+        case DECEL_STATE:
+
+            break;
+
+
+    }
     // calculate new position and speed for case where stopped or accelerating
 
 

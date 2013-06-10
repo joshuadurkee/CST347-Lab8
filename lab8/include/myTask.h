@@ -167,7 +167,7 @@ typedef enum
 } motor_led_state_t;
 
 
-typedef enum                        //                 ****************
+typedef enum                        // pos vs time     ****************
 {                                   //                *                *
     ACCEL_STATE,                    //               *                  *
     CONST_STATE,                    //              *                    *
@@ -181,18 +181,21 @@ typedef enum                        //                 ****************
 // stuctures
 //
 
-
 typedef struct
 {
+    elev_move_state_t
+                move_state;     /* state machine state for elevator movement  */
     elevator_direction_t
-                dir;      /* direction elevator is moving               */
+                dir;            /* direction elevator is moving               */
     float       cur_pos;        /* current position of elevator in feet       */
+    float       stop_accel_pos; /* calculated stop acceleration position      */
+    float       decel_pos;      /* calculated start deceleration position     */
     float       dest_pos;       /* destination position of elevator in feet   */
     float       speed;          /* current speed of eleveator in feet per second */
     int         max_speed;      /* maximum speed of elevator in feet per second */
     int         new_max_speed;  /* future value of max_speed                  */
-    int         accel;   /* acceleration of elevator in feet per second squared */
-    int         new_accel; /* future value of acceleration             */
+    int         accel;          /* acceleration of elevator in feet per second squared */
+    int         new_accel;      /* future value of acceleration               */
 } elevator_movement_t;
 
 
@@ -231,7 +234,7 @@ float calc_pos_with_accel( elevator_movement_t elev );
 float calc_pos_with_const_speed( elevator_movement_t elev );
 float calc_pos_with_decel( elevator_movement_t elev );
 
-float calc_position( elevator_movement_t elev );
+float calc_pos( elevator_movement_t elev );
 
 //float calc_velocity( float acceleration, float time, float previous_velocity );
 
