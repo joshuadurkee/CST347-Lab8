@@ -226,8 +226,13 @@ void queue_elevator_movement( int floor );
 elevator_direction_t get_dir_to_dest_flr( elevator_movement_t elev );
 int get_decel_pos( elevator_movement_t elev );
 
-float calc_position( float acceleration, float time, float previous_velocity );
-float calc_velocity( float acceleration, float time, float previous_velocity );
+float calc_pos_with_accel( elevator_movement_t elev );
+float calc_pos_with_const_speed( elevator_movement_t elev );
+float calc_pos_with_decel( elevator_movement_t elev );
+
+float calc_position( elevator_movement_t elev );
+
+//float calc_velocity( float acceleration, float time, float previous_velocity );
 
 
 #endif	/* MYTASK_H */

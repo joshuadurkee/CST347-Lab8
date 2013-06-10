@@ -34,8 +34,11 @@ elevator_movement_t elevator =
 {
     STOP,
     (float)GD_FLOOR_POS,
+    (float)GD_FLOOR_POS,
     0.0f,
     MAX_SPEED_FPS_DFLT,
+    MAX_SPEED_FPS_DFLT,
+    ACCEL_FPSS_DFLT,
     ACCEL_FPSS_DFLT,
 };
 
@@ -67,7 +70,21 @@ void irqButtonControlTask( void *params )
 
             // check if button is released to give the semaphore (this causes the LED to toggle)
             if( !button_pressed[ i ] && button_pressed_old[ i ] )
+            {
                 xSemaphoreGive( ledNAction[ i ] );
+                switch( i )
+                {
+                    case 0:
+                        queue_elevator_movement( P2_FLOOR_POS );
+                        break;
+                    case 1:
+                        queue_elevator_movement( P1_FLOOR_POS );
+                        break;
+                    case 2:
+                        queue_elevator_movement( GD_FLOOR_POS );
+                        break;
+                }
+            }
         }
 
         enable_change_notification_irq();
@@ -160,28 +177,28 @@ void rxControlTask( void *params )
         {
             case GD_CALL_CHAR:
                 queue_elevator_movement( GD_FLOOR_POS );
-                transmit_string( "\n" );
+                transmit_string( "\r\n" );
                 break;
             case P1_CALL_DN_CHAR:
             case P1_CALL_UP_CHAR:
                 queue_elevator_movement( P1_FLOOR_POS );
-                transmit_string( "\n" );
+                transmit_string( "\r\n" );
                 break;
             case P2_CALL_CHAR:
                 queue_elevator_movement( P2_FLOOR_POS );
-                transmit_string( "\n" );
+                transmit_string( "\r\n" );
                 break;
             case EM_STOP_CHAR:
                 set_estop();
-                transmit_string( "\nEmergency stop triggered!\r\n" );
+                transmit_string( "\r\nEmergency stop triggered!\r\n" );
                 break;
             case EM_CLR_CHAR_:
                 clear_estop();
-                transmit_string( "\nEmergency clear triggered!\r\n" );
+                transmit_string( "\r\nEmergency clear triggered!\r\n" );
                 break;
             case DOOR_INTF_CHAR:
                 door_interference_flag = true;
-                transmit_string( "\n" );
+                transmit_string( "\r\n" );
                 break;
             case '\r':              /* complete command string on carriage return */
                 // echo back end of the line entered by user
@@ -520,11 +537,19 @@ void elevatorMoveTask( void )
         // receive the next floor position to move to
         xQueueReceive( elevator_move_queue_handle, &next_floor_pos, portMAX_DELAY );
 
+        // TEST
+        elevator.speed = 10;
+
+        elevator.dest_pos = next_floor_pos;
+
         /* set static acceleration and max speed for each move of the elevator,
          * this is necessary as using a dynamic acceleration could result in an
          * elevator not being able to decelerate quickly enough to prevent a crash */
         elevator.max_speed = elevator.new_max_speed;
         elevator.accel = elevator.new_accel;
+        elevator.dir = get_dir_to_dest_flr( elevator );
+
+        vTaskResume( motor_control_task_handle );
 
         // goto the next destination
         while( elevator.cur_pos != next_floor_pos )
@@ -559,37 +584,29 @@ void elevatorMoveTask( void )
             
             // calculate updated position for a time delta of 500ms
             // NOTE: this may include stopping acceleration or starting deceleration or both
-
-            // calculate new position and speed for case where stopped or accelerating
-
-                // if calculated position is beyond calculated_stop_accel_pos, perform second calculation
-
-                    // if second calculated position is beyond calculated_decel_pos, perform third calculation
-
-            // calculate new position and speed for case where at max speed (no acceleration/deceleration)
-
-                // if calculated position is beyond calculated_decel_pos, perform second calculation
-
-            // calculate new position and speed for case where decelerating
-
-
-
-
-//            elevator.cur_pos = 0;
-
-            // determine if
+//            elevator.cur_pos = calc_pos( elevator );
+            elevator.cur_pos += 10 * elevator.dir;
 
             // TODO calculate current speed
 //            elevator.speed = calc_velocity( elevator.accel, elevator.speed, ELEVATOR_UPDATE_INTERVAL_MS );
 //            elevator.speed = MAX( elevator.speed, elevator.max_speed );
 
-            // display direction LEDs
-            set_elevator_up_down_leds( elevator.dir );
+//            if( elevator.cur_pos != next_floor_pos )
+//            {
+                // display direction LEDs
+                set_elevator_up_down_leds( elevator.dir );
 
-            // display distance and speed status
-            send_elevator_status( next_floor_pos, (bool)elevator.speed );
-            send_movement_status( elevator.cur_pos, elevator.speed );
+                // display distance and speed status
+                send_elevator_status( next_floor_pos, (bool)elevator.speed );
+                send_movement_status( elevator.cur_pos, elevator.speed );
+//            }
+              if( elevator.cur_pos == next_floor_pos )
+              {
+                  elevator.speed = 0;
+              }
         }
+
+        vTaskSuspend( motor_control_task_handle );
         
         if( emergency_stop_flag )
         {
@@ -688,13 +705,58 @@ int get_decel_pos( elevator_movement_t elev )
 }
 
 
-float calc_position( float acceleration, float time, float previous_velocity )
+float calc_pos_with_accel( elevator_movement_t elev )
 {
-    return ( acceleration * time ) + previous_velocity;
+    float calc_pos;
+
+    calc_pos = ( elev.speed * ELEVATOR_UPDATE_INTERVAL_MS ) + ( elev.accel * SQRD( ELEVATOR_UPDATE_INTERVAL_MS ) ) / 2;
+
+    return calc_pos;
 }
 
 
-float calc_velocity( float acceleration, float time, float previous_velocity )
+float calc_pos_with_const_speed( elevator_movement_t elev )
 {
-    return ( acceleration * time ) + previous_velocity;
+    float calc_pos;
+
+
+    
+    return calc_pos;
 }
+
+
+float calc_pos_with_decel( elevator_movement_t elev )
+{
+    float calc_pos;
+
+
+    
+    return calc_pos;
+}
+
+
+float calc_pos( elevator_movement_t elev )
+{
+    float calc_pos;
+
+    // calculate new position and speed for case where stopped or accelerating
+
+
+        // if calculated position is beyond calculated_stop_accel_pos, perform second calculation
+
+            // if second calculated position is beyond calculated_decel_pos, perform third calculation
+
+    // calculate new position and speed for case where at max speed (no acceleration/deceleration)
+
+        // if calculated position is beyond calculated_decel_pos, perform second calculation
+
+    // calculate new position and speed for case where decelerating
+
+    return calc_pos;
+}
+
+
+//float calc_velocity( float acceleration, float time, float previous_velocity )
+//{
+//    return ( acceleration * time ) + previous_velocity;
+//}
