@@ -431,20 +431,18 @@ void motorControlTask( void )
     {
         set_motor_leds( state );
         
-        if( elevator.speed != 0 )
+        if( elevator.speed >= MOTOR_CONTROL_DELAY_FACTOR )
         {
             // protect against negative velocities
-            if( elevator.speed > 0 )
-                motor_speed = elevator.speed;
-            else
-                motor_speed = elevator.speed * -1;
+            motor_speed = ABS( elevator.speed );
 
             // shave off one's digit to round down to factor of 10
             motor_speed = motor_speed - ( (int)motor_speed % MOTOR_CONTROL_DELAY_FACTOR );
 
             ms_delay( MOTOR_CONTROL_BASE_DELAY / motor_speed );
         }
-        else
+
+        if( elevator.speed == 0 )
         {
             vTaskSuspend( NULL );
             state = LED3;
@@ -520,11 +518,14 @@ void elevatorMoveTask( void )
         // receive the next floor position to move to
         xQueueReceive( elevator_move_queue_handle, &next_floor_pos, portMAX_DELAY );
 
-        // TEST
-        elevator.speed = 35;
-
         elevator.dest_pos = (float)next_floor_pos;
         elevator.dir = get_dir_to_dest_flr( elevator );
+
+        /* set static acceleration and max speed for each move of the elevator,
+         * this is necessary as using a dynamic acceleration could result in an
+         * elevator not being able to decelerate quickly enough to prevent a crash */
+        elevator.max_speed = elevator.new_max_speed;
+        elevator.accel = elevator.new_accel;
 
         // determine position where acceleration should stop in order to not exceed max speed
         // and to meet requirements to start decelerating in time to stop at destination floor
@@ -535,12 +536,8 @@ void elevatorMoveTask( void )
 
         elevator.move_state = ACCEL_STATE;
 
-        /* set static acceleration and max speed for each move of the elevator,
-         * this is necessary as using a dynamic acceleration could result in an
-         * elevator not being able to decelerate quickly enough to prevent a crash */
-        elevator.max_speed = elevator.new_max_speed;
-        elevator.accel = elevator.new_accel;
-
+        //So the motor control doesn't immediately suspend itself
+        elevator.speed = 0.01;
         vTaskResume( motor_control_task_handle );
 
         // goto the next destination
@@ -553,6 +550,8 @@ void elevatorMoveTask( void )
             {
                 // override the destination with the ground floor
                 elevator.dest_pos = GD_FLOOR_POS;
+                elevator.stop_accel_pos = get_stop_accel_pos( elevator );
+                elevator.decel_pos = get_decel_pos( elevator );
             }
 
             // determine direction to destination floor
@@ -564,6 +563,7 @@ void elevatorMoveTask( void )
             if( elevator.dir != STOP && elevator.dir != calculated_dir )
             {
                 // TODO deccelerate immediately in order to change direction
+                elevator.move_state = DECEL_STATE;
 
                 // NOTE: updating deceleration position is not necessary as this will occur
                 //       after next xQueueReceive (either previously queued or queued by set_estop function)
@@ -571,14 +571,13 @@ void elevatorMoveTask( void )
             
             // calculate updated position for a time delta of 500ms
             // NOTE: this may include stopping acceleration or starting deceleration or both
-//            elevator.cur_pos = calc_pos( elevator );
 
             elevator.cur_pos = calc_pos( elevator );
 
             // TODO calculate current speed
 //            elevator.speed = calc_velocity( elevator.accel, elevator.speed, ELEVATOR_UPDATE_INTERVAL_MS );
 //            elevator.speed = MAX( elevator.speed, elevator.max_speed );
-
+            
             if( iter == ELEVATOR_UPDATE_INTERVAL_CNT )
             {
                 iter = 0;
@@ -794,7 +793,13 @@ float calc_pos( elevator_movement_t elev )
         case ACCEL_STATE:       // calculate new position and speed for case where stopped or accelerating
             calc_pos = calc_pos_with_accel( elevator );
 
-            // TODO calculate speed
+            // calculate speed
+            if (elevator.speed < elevator.max_speed)
+            {
+                elevator.speed += elevator.accel * ELEVATOR_PROCESS_INTERVAL_S;
+                if (elevator.speed > elevator.max_speed)
+                    elevator.speed = elevator.max_speed;
+            }
 
             // check if beyond stop_accel_pos or decel_pos
             if( beyond_decel_pos( elevator ) )
@@ -816,6 +821,7 @@ float calc_pos( elevator_movement_t elev )
             calc_pos = calc_pos_with_const_speed( elevator );
 
             // TODO calculate speed
+            // Do nothing, speed is not changing
 
             // check if beyond decel_pos
             if( beyond_decel_pos( elevator ) )
@@ -835,6 +841,12 @@ float calc_pos( elevator_movement_t elev )
                 calc_pos += 0.5f;
             
             // TODO calculate speed
+            if (elevator.speed > 0)
+            {
+                elevator.speed -= elevator.accel * ELEVATOR_PROCESS_INTERVAL_S;
+                if (elevator.speed < 0)
+                    elevator.speed = 0;
+            }
 
             break;
     }
