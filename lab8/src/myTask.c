@@ -713,9 +713,13 @@ int get_decel_pos( elevator_movement_t elev )
 
 float calc_pos_with_accel( elevator_movement_t elev )
 {
+    float calc_dis;
     float calc_pos;
 
-    calc_pos = ( elev.speed * ELEVATOR_UPDATE_INTERVAL_S ) + ( elev.accel * SQRD( ELEVATOR_UPDATE_INTERVAL_S ) ) / 2;
+    calc_dis = ( elev.speed * ELEVATOR_UPDATE_INTERVAL_S ) + ( elev.accel * SQRD( ELEVATOR_UPDATE_INTERVAL_S ) ) / 2;
+    calc_dis *= elev.dir;
+
+    calc_pos = elev.cur_pos + calc_dis;
 
     return calc_pos;
 }
@@ -737,10 +741,14 @@ float calc_pos_with_const_speed( elevator_movement_t elev )
 
 float calc_pos_with_decel( elevator_movement_t elev )
 {
+    float calc_dis;
     float calc_pos;
 
+    calc_dis = ( elev.speed * ELEVATOR_UPDATE_INTERVAL_S ) + ( -elev.accel * SQRD( ELEVATOR_UPDATE_INTERVAL_S ) ) / 2;
+    calc_dis *= elev.dir;
 
-    
+    calc_pos = elev.cur_pos + calc_dis;
+
     return calc_pos;
 }
 

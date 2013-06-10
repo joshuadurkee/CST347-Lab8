@@ -172,6 +172,16 @@ typedef enum
 } motor_led_state_t;
 
 
+typedef enum                        //                 ****************
+{                                   //                *                *
+    ACCEL_STATE,                    //               *                  *
+    CONST_STATE,                    //              *                    *
+    DECEL_STATE                     //             *                      *
+} elev_move_state_t;                //            *                        *
+                                    //           *                          *
+                                    //          *                            *
+                                    //         *                              *
+                                    // states:   ACCEL |    CONST     |  DECEL
 //
 // stuctures
 //
