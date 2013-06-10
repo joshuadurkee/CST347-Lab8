@@ -91,6 +91,8 @@
 #define MAX_SPEED_FPS_DFLT  40
 #define ELEVATOR_UPDATE_INTERVAL_MS \
                             500
+#define ELEVATOR_UPDATE_INTERVAL_S \
+                            0.5f
 #define EM_CLR_WAIT_MS      20
 
 // elevator positions

@@ -538,7 +538,7 @@ void elevatorMoveTask( void )
         xQueueReceive( elevator_move_queue_handle, &next_floor_pos, portMAX_DELAY );
 
         // TEST
-        elevator.speed = 10;
+        elevator.speed = 35;
 
         elevator.dest_pos = next_floor_pos;
 
@@ -552,14 +552,14 @@ void elevatorMoveTask( void )
         vTaskResume( motor_control_task_handle );
 
         // goto the next destination
-        while( elevator.cur_pos != next_floor_pos )
+        while( elevator.cur_pos != elevator.dest_pos )
         {
             ms_delay( ELEVATOR_UPDATE_INTERVAL_MS );
 
             if( emergency_stop_flag )
             {
                 // override the destination with the ground floor
-                next_floor_pos = GD_FLOOR_POS;
+                elevator.dest_pos = GD_FLOOR_POS;
             }
 
             // determine direction to destination floor
@@ -585,25 +585,31 @@ void elevatorMoveTask( void )
             // calculate updated position for a time delta of 500ms
             // NOTE: this may include stopping acceleration or starting deceleration or both
 //            elevator.cur_pos = calc_pos( elevator );
-            elevator.cur_pos += 10 * elevator.dir;
+
+            // TEST
+            elevator.cur_pos = calc_pos_with_const_speed( elevator );
 
             // TODO calculate current speed
 //            elevator.speed = calc_velocity( elevator.accel, elevator.speed, ELEVATOR_UPDATE_INTERVAL_MS );
 //            elevator.speed = MAX( elevator.speed, elevator.max_speed );
 
-//            if( elevator.cur_pos != next_floor_pos )
+//            if( elevator.cur_pos != elevator.dest_pos )
 //            {
                 // display direction LEDs
                 set_elevator_up_down_leds( elevator.dir );
 
                 // display distance and speed status
-                send_elevator_status( next_floor_pos, (bool)elevator.speed );
+                send_elevator_status( elevator.dest_pos, (bool)elevator.speed );
                 send_movement_status( elevator.cur_pos, elevator.speed );
 //            }
-              if( elevator.cur_pos == next_floor_pos )
-              {
-                  elevator.speed = 0;
-              }
+
+            // determine if elevator has reached the destination
+            if( elevator.cur_pos == elevator.dest_pos
+             || get_dir_to_dest_flr( elevator ) != elevator.dir )
+            {
+                elevator.speed = 0;
+                elevator.cur_pos = elevator.dest_pos;
+            }
         }
 
         vTaskSuspend( motor_control_task_handle );
@@ -709,7 +715,7 @@ float calc_pos_with_accel( elevator_movement_t elev )
 {
     float calc_pos;
 
-    calc_pos = ( elev.speed * ELEVATOR_UPDATE_INTERVAL_MS ) + ( elev.accel * SQRD( ELEVATOR_UPDATE_INTERVAL_MS ) ) / 2;
+    calc_pos = ( elev.speed * ELEVATOR_UPDATE_INTERVAL_S ) + ( elev.accel * SQRD( ELEVATOR_UPDATE_INTERVAL_S ) ) / 2;
 
     return calc_pos;
 }
@@ -717,9 +723,13 @@ float calc_pos_with_accel( elevator_movement_t elev )
 
 float calc_pos_with_const_speed( elevator_movement_t elev )
 {
+    float calc_dis;
     float calc_pos;
 
+    calc_dis = elev.speed * ELEVATOR_UPDATE_INTERVAL_S;
+    calc_dis *= elev.dir;
 
+    calc_pos = elev.cur_pos + calc_dis;
     
     return calc_pos;
 }
