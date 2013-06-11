@@ -42,9 +42,9 @@ elevator_movement_t elevator =
     ACCEL_FPSS_DFLT,
 };
 
+static bool estop_decel_finished_flag = false;
 static bool door_interference_flag = false;
 static bool emergency_stop_flag    = false;
-static bool estop_decel_finished_flag       = false;
 
 
 void irqButtonControlTask( void *params )
