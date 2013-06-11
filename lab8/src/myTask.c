@@ -523,6 +523,11 @@ void set_estop( void )
 
     emergency_stop_flag = true;
 
+    if ( elevator.cur_pos == GD_FLOOR_POS
+      || elevator.cur_pos == P1_FLOOR_POS
+      || elevator.cur_pos == P2_FLOOR_POS )
+        estop_decel_finished_flag = true;
+
     // send move to ground floor command in case it is needed to jump start elevatorMoveTask,
     // ok because elevator_move_queue_handle is cleared after an estop
     queue_elevator_movement_high_priority( floor );
