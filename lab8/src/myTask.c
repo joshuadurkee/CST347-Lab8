@@ -555,8 +555,6 @@ void queue_elevator_movement_high_priority( int floor )
 void elevatorMoveTask( void )
 {
     int     next_floor_pos;
-    elevator_direction_t
-            calculated_dir;
     int     iter = 0;
     
     while( 1 )
@@ -585,35 +583,25 @@ void elevatorMoveTask( void )
         vTaskResume( motor_control_task_handle );
 
         // goto the next destination
-        while( elevator.cur_pos != elevator.dest_pos && !estop_decel_finished_flag)
+        while( elevator.cur_pos != elevator.dest_pos )
         {
             ms_delay( ELEVATOR_PROCESS_INTERVAL_MS );
             iter++;
 
-            if( emergency_stop_flag && !estop_decel_finished_flag )
+            // check if deceleration is needed (just got an estop)
+            if( emergency_stop_flag == true && estop_decel_finished_flag == false )
             {
                 // deccelerate immediately
-                elevator.stop_accel_pos = elevator.cur_pos;
-                elevator.decel_pos = elevator.cur_pos;
                 elevator.move_state = DECEL_STATE;
-                if(elevator.speed == 0)
+                if( elevator.speed == 0.0f )
                 {
                      estop_decel_finished_flag = true;
-                     elevator.dir = get_dir_to_dest_flr( elevator );
+                     break;
                 }
             }
-
-            // determine direction to destination floor
-            calculated_dir = get_dir_to_dest_flr( elevator );
             
             // calculate updated position for a time delta of 500ms
-            // NOTE: this may include stopping acceleration or starting deceleration or both
-
             elevator.cur_pos = calc_pos( elevator );
-
-            // TODO calculate current speed
-//            elevator.speed = calc_velocity( elevator.accel, elevator.speed, ELEVATOR_UPDATE_INTERVAL_MS );
-//            elevator.speed = MAX( elevator.speed, elevator.max_speed );
             
             if( iter == ELEVATOR_UPDATE_INTERVAL_CNT )
             {
@@ -627,12 +615,9 @@ void elevatorMoveTask( void )
                 send_movement_status( elevator.cur_pos, elevator.speed );
             }
 
-            // FIXME this can also be cause by estop changing direction for new destination floor
-            //       fix with FIXME above
-            // determine if elevator has reached the destination (or overshot)
-            if( ( elevator.cur_pos == elevator.dest_pos
-             || get_dir_to_dest_flr( elevator ) != elevator.dir ) 
-             && estop_decel_finished_flag )
+            // determine if elevator has reached the destination or overshot it
+            if( elevator.cur_pos == elevator.dest_pos
+             || get_dir_to_dest_flr( elevator ) != elevator.dir )
             {
                 elevator.speed = 0;
                 elevator.dir = STOP;
@@ -645,7 +630,7 @@ void elevatorMoveTask( void )
 
         vTaskSuspend( motor_control_task_handle );
 
-        if( !estop_decel_finished_flag )
+        if( estop_decel_finished_flag == false )
         {
             if( emergency_stop_flag )
             {
@@ -654,9 +639,6 @@ void elevatorMoveTask( void )
                 // wait for emergency clear to clear the estop flag
                 while( emergency_stop_flag )
                     ms_delay( EM_CLR_WAIT_MS );
-
-                // TODO clear queue when estop movement is complete (recovering from an estop event should clear the system)
-
 
                 close_door();
             }
