@@ -44,6 +44,9 @@ elevator_movement_t elevator =
 
 static bool door_interference_flag = false;
 static bool emergency_stop_flag    = false;
+static bool door_open_flag         = true;
+static bool force_door_closed_flag = false;
+static bool operate_door_flag      = false;
 
 
 void irqButtonControlTask( void *params )
@@ -109,9 +112,10 @@ void pollButtonControlTask( void *params )
             switch( button_pressed )
             {
                 case OPEN_BUTTON_BIT:               // open button pressed
-                    operate_door();
+                    operate_door_flag = true;
                     break;                
                 case CLOSE_BUTTON_BIT:              // close button pressed
+                    force_door_closed_flag = true;
                     close_door();
                     break;
             }
@@ -356,8 +360,10 @@ void set_door_leds( door_movement_t state )
 
 void open_door( void )
 {
-    if( elevator.dir == STOP )
+    if( elevator.dir == STOP && door_open_flag == false )
     {
+        door_open_flag = true;
+
         set_door_leds( CLOSED );
         ms_delay( DOOR_STATE_DURATION_MS );
 
@@ -373,18 +379,10 @@ void open_door( void )
 }
 
 
-// determine if the elevator door is "closed" by reading all three RDn LEDs,
-// these will all be set only when the door is closed
-bool door_is_closed( void )
-{
-    return READ_BITS( DOOR_LED_0 ) && READ_BITS( DOOR_LED_1 ) && READ_BITS( DOOR_LED_2 );
-}
-
-
 // return true if door closed successfully, otherwise return false
 bool close_door( void )
 {
-    if( !door_is_closed() )
+    if( door_open_flag == true )
     {
         set_door_leds( OPEN );
         ms_delay( DOOR_STATE_DURATION_MS );
@@ -413,23 +411,49 @@ bool close_door( void )
 
         set_door_leds( CLOSED );
         ms_delay( DOOR_STATE_DURATION_MS );
+        door_open_flag = false;
     }
 
     return true;
 }
 
 
-// FIXME the RC2 button should be able to close the door in which case this function should return.
-//       a potential solution would be to create a door_open flag and check it with an ms_delay of 10ms,
-//       looping over it until DOOR_OPEN_DURATION_MS has lapsed.
 // open and close door (until closing door succeeds)
 void operate_door( void )
 {
-    open_door();
-    ms_delay( DOOR_OPEN_DURATION_MS );
+    int wait_ms = 10;
+    int i;
 
-    while( !close_door() )
-        ms_delay( DOOR_OPEN_DURATION_MS );
+    open_door();
+
+    do
+    {
+        for( i = 0; i < DOOR_OPEN_DURATION_MS / wait_ms; i++ )
+        {
+            ms_delay( wait_ms );
+            if( force_door_closed_flag == true )
+            {
+                force_door_closed_flag = false;
+                break;
+            }
+        }
+    } while( !close_door() && door_open_flag == true );
+}
+
+
+void elevatorDoorTask( void )
+{
+    close_door();
+
+    while( 1 )
+    {        
+        // check operate_door_flag
+        if( operate_door_flag )
+        {
+            operate_door();
+            operate_door_flag = false;
+        }
+    }
 }
 
 

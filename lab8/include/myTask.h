@@ -210,6 +210,7 @@ void ledControlTask( void *params );
 void txControlTask( void *params );
 void rxControlTask( void *params );
 void elevatorMoveTask( void );
+void elevatorDoorTask( void );
 void motorControlTask( void );
 
 // helper functions
