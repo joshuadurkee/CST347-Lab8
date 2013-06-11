@@ -44,6 +44,7 @@ elevator_movement_t elevator =
 
 static bool door_interference_flag = false;
 static bool emergency_stop_flag    = false;
+static bool estop_decel_finished_flag       = false;
 
 
 void irqButtonControlTask( void *params )
@@ -560,36 +561,26 @@ void elevatorMoveTask( void )
         vTaskResume( motor_control_task_handle );
 
         // goto the next destination
-        while( elevator.cur_pos != elevator.dest_pos )
+        while( elevator.cur_pos != elevator.dest_pos && !estop_decel_finished_flag)
         {
             ms_delay( ELEVATOR_PROCESS_INTERVAL_MS );
             iter++;
 
-            if( emergency_stop_flag )
+            if( emergency_stop_flag && !estop_decel_finished_flag )
             {
-                // override the destination with the ground floor
-                elevator.dest_pos = GD_FLOOR_POS;
-                elevator.stop_accel_pos = get_stop_accel_pos( elevator );
-                elevator.decel_pos = get_decel_pos( elevator );
-
-
-
+                // deccelerate immediately
+                elevator.stop_accel_pos = elevator.cur_pos;
+                elevator.decel_pos = elevator.cur_pos;
+                elevator.move_state = DECEL_STATE;
+                if(elevator.speed == 0)
+                {
+                     estop_decel_finished_flag = true;
+                     elevator.dir = get_dir_to_dest_flr( elevator );
+                }
             }
 
             // determine direction to destination floor
             calculated_dir = get_dir_to_dest_flr( elevator );
-
-            // FIXME fix for estop case
-            // determine if moving in wrong direction to destination floor, could
-            // be caused by overshoot or estop (as estop overrides destination)
-            if( elevator.dir != STOP && elevator.dir != calculated_dir )
-            {
-                // TODO deccelerate immediately in order to change direction
-                elevator.move_state = DECEL_STATE;
-
-                // NOTE: updating deceleration position is not necessary as this will occur
-                //       after next xQueueReceive (either previously queued or queued by set_estop function)
-            }
             
             // calculate updated position for a time delta of 500ms
             // NOTE: this may include stopping acceleration or starting deceleration or both
@@ -615,35 +606,40 @@ void elevatorMoveTask( void )
             // FIXME this can also be cause by estop changing direction for new destination floor
             //       fix with FIXME above
             // determine if elevator has reached the destination (or overshot)
-            if( elevator.cur_pos == elevator.dest_pos
-             || get_dir_to_dest_flr( elevator ) != elevator.dir )
+            if( ( elevator.cur_pos == elevator.dest_pos
+             || get_dir_to_dest_flr( elevator ) != elevator.dir ) 
+             && estop_decel_finished_flag )
             {
                 elevator.speed = 0;
                 elevator.dir = STOP;
                 elevator.cur_pos = elevator.dest_pos;
                 send_elevator_status( elevator.dest_pos, (bool)elevator.speed );
                 set_elevator_up_down_leds( STOP );
+                estop_decel_finished_flag = false;
             }
         }
 
         vTaskSuspend( motor_control_task_handle );
-        
-        if( emergency_stop_flag )
+
+        if( !estop_decel_finished_flag )
         {
-            open_door();
+            if( emergency_stop_flag )
+            {
+                open_door();
 
-            // wait for emergency clear to clear the estop flag
-            while( emergency_stop_flag )
-                ms_delay( EM_CLR_WAIT_MS );
+                // wait for emergency clear to clear the estop flag
+                while( emergency_stop_flag )
+                    ms_delay( EM_CLR_WAIT_MS );
 
-            // TODO clear queue when estop movement is complete (recovering from an estop event should clear the system)
+                // TODO clear queue when estop movement is complete (recovering from an estop event should clear the system)
 
 
-            close_door();
-        }
-        else
-        {
-            operate_door();
+                close_door();
+            }
+            else
+            {
+                operate_door();
+            }
         }
     }
 }
