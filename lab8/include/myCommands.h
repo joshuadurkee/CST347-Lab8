@@ -36,7 +36,6 @@ portBASE_TYPE prvSendToFloorCommand         ( int8_t *pcWriteBuffer, size_t xWri
 portBASE_TYPE prvEmergencyStopCommand       ( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 portBASE_TYPE prvEmergencyClearCommand      ( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 portBASE_TYPE prvTaskStatsCommand           ( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-portBASE_TYPE prvRunTimeStatsCommand        ( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 void register_commands( void );
 
 

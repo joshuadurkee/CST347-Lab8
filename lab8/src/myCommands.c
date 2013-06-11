@@ -171,8 +171,8 @@ const char taskListHdr[] = "Name\t\tStat\tPri\tS/Space\tTCB";
 
 const xCommandLineInput xTaskStatsCommand =
 {
-    "task-stats",
-    "task-stats: Displays a table of task state information\r\n",
+    "TS",
+    "TS: Displays a table of task state information\r\n",
     prvTaskStatsCommand,
     0
 };
@@ -181,27 +181,6 @@ portBASE_TYPE prvTaskStatsCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen
 {
     sprintf( pcWriteBuffer, taskListHdr );
     vTaskList( pcWriteBuffer + strlen( taskListHdr ) );
-
-    return pdFALSE;
-}
-
-/*----------------------------------------------------------------------
-    run-time-stats command
-----------------------------------------------------------------------*/
-const char runTimeListHdr[] = "Name\t\tAbs Time\t% Time\r\n";
-
-const xCommandLineInput xRunTimeStatsCommand =
-{
-    "run-time-stats",
-    "run-time-stats: Displays a table of run-time information\r\n",
-    prvRunTimeStatsCommand,
-    0
-};
-
-portBASE_TYPE prvRunTimeStatsCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
-{
-    sprintf( pcWriteBuffer, runTimeListHdr );
-    //vTaskGetRunTimeStats( pcWriteBuffer + strlen( runTimeListHdr ) );
 
     return pdFALSE;
 }
@@ -215,8 +194,7 @@ void register_commands( void )
      || FreeRTOS_CLIRegisterCommand( &xSendToFloorCommand )         == pdFAIL
      || FreeRTOS_CLIRegisterCommand( &xEmergencyStopCommand )       == pdFAIL
      || FreeRTOS_CLIRegisterCommand( &xEmergencyClearCommand )      == pdFAIL
-     || FreeRTOS_CLIRegisterCommand( &xTaskStatsCommand )           == pdFAIL
-     || FreeRTOS_CLIRegisterCommand( &xRunTimeStatsCommand )        == pdFAIL )
+     || FreeRTOS_CLIRegisterCommand( &xTaskStatsCommand )           == pdFAIL )
     {
         // error registering commands
         while( 1 );
