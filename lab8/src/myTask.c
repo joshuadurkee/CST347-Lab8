@@ -373,36 +373,47 @@ void open_door( void )
 }
 
 
+// determine if the elevator door is "closed" by reading all three RDn LEDs,
+// these will all be set only when the door is closed
+bool door_is_closed( void )
+{
+    return READ_BITS( DOOR_LED_0 ) && READ_BITS( DOOR_LED_1 ) && READ_BITS( DOOR_LED_2 );
+}
+
+
 // return true if door closed successfully, otherwise return false
 bool close_door( void )
 {
-    set_door_leds( OPEN );
-    ms_delay( DOOR_STATE_DURATION_MS );
-
-    set_door_leds( MOSTLY_OPEN );
-    ms_delay( DOOR_STATE_DURATION_MS );
-
-    set_door_leds( MOSTLY_CLOSED );
-    ms_delay( DOOR_STATE_DURATION_MS );
-
-    // check for door interference
-    if( door_interference_flag )
+    if( !door_is_closed() )
     {
-        door_interference_flag = false;
-
-        transmit_string( "Door interference closing door!\r\n" );
+        set_door_leds( OPEN );
+        ms_delay( DOOR_STATE_DURATION_MS );
 
         set_door_leds( MOSTLY_OPEN );
         ms_delay( DOOR_STATE_DURATION_MS );
 
-        set_door_leds( OPEN );
+        set_door_leds( MOSTLY_CLOSED );
         ms_delay( DOOR_STATE_DURATION_MS );
 
-        return false;
-    }
+        // check for door interference
+        if( door_interference_flag )
+        {
+            door_interference_flag = false;
 
-    set_door_leds( CLOSED );
-    ms_delay( DOOR_STATE_DURATION_MS );
+            transmit_string( "Door interference closing door!\r\n" );
+
+            set_door_leds( MOSTLY_OPEN );
+            ms_delay( DOOR_STATE_DURATION_MS );
+
+            set_door_leds( OPEN );
+            ms_delay( DOOR_STATE_DURATION_MS );
+
+            return false;
+        }
+
+        set_door_leds( CLOSED );
+        ms_delay( DOOR_STATE_DURATION_MS );
+    }
 
     return true;
 }
@@ -833,10 +844,11 @@ float calc_pos( elevator_movement_t elev )
         case DECEL_STATE:
             calc_pos = calc_pos_with_decel( elevator );
 
+            // this is here in case it is deemed necessary to uncomment later
             // ensure small errors don't cause elevator to not reach destination floor,
             // if elevator is more than 95% of DECEL_STATE, add an extra 0.5 ft
-            if( ABS( calc_pos - elev.dest_pos ) < 0.05f * ABS( elev.dest_pos - elev.decel_pos ) )
-                calc_pos += 0.5f;
+//            if( ABS( calc_pos - elev.dest_pos ) < 0.05f * ABS( elev.dest_pos - elev.decel_pos ) )
+//                calc_pos += 0.1f * elev.dir;
             
             // TODO calculate speed
             if (elevator.speed > 0)

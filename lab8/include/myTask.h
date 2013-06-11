@@ -132,7 +132,7 @@
 #define CLEAR_BITS(x)       PORTClearBits( GET_PORT_NAME(x), GET_PIN_NAME(x) )
 #define SET_BITS(x)         PORTSetBits( GET_PORT_NAME(x), GET_PIN_NAME(x) )
 #define TOGGLE_BITS(x)      PORTToggleBits( GET_PORT_NAME(x), GET_PIN_NAME(x) )
-
+#define READ_BITS(x)        PORTReadBits( GET_PORT_NAME(x), GET_PIN_NAME(x) )
 
 //
 // enumerated types
@@ -221,6 +221,7 @@ void send_movement_status( float position_f, float speed_fps );
 void set_elevator_up_down_leds( elevator_direction_t led_state );
 void set_door_leds( door_movement_t state );
 void open_door( void );
+bool door_is_closed( void );
 bool close_door( void );
 void operate_door( void );
 void set_motor_leds( motor_led_state_t state );
@@ -229,7 +230,6 @@ void clear_estop( void );
 void queue_elevator_movement( int floor );
 elevator_direction_t get_dir_to_dest_flr( elevator_movement_t elev );
 int get_decel_pos( elevator_movement_t elev );
-
 float calc_pos_with_accel( elevator_movement_t elev );
 float calc_pos_with_const_speed( elevator_movement_t elev );
 float calc_pos_with_decel( elevator_movement_t elev );
