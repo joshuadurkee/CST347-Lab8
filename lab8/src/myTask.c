@@ -442,7 +442,7 @@ void motorControlTask( void )
             ms_delay( MOTOR_CONTROL_BASE_DELAY / motor_speed );
         }
 
-        if( elevator.speed == 0 )
+        if( elevator.dir == STOP )
         {
             vTaskSuspend( NULL );
             state = LED3;
@@ -536,8 +536,6 @@ void elevatorMoveTask( void )
 
         elevator.move_state = ACCEL_STATE;
 
-        //So the motor control doesn't immediately suspend itself
-        elevator.speed = 0.01;
         vTaskResume( motor_control_task_handle );
 
         // goto the next destination
