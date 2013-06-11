@@ -108,6 +108,7 @@ convert a time in milliseconds into a time in ticks. */
 #define TX_TASK_PRIORITY            1
 #define RX_TASK_PRIORITY            1
 #define ELEVATOR_MOVE_TASK_PRIORITY 1
+#define ELEVATOR_DOOR_TASK_PRIORITY 1
 #define MOTOR_CONTROL_TASK_PRIORITY 1
 
 // variables
@@ -116,6 +117,7 @@ xTaskHandle poll_button_task_handle;
 xTaskHandle tx_task_handle;
 xTaskHandle rx_task_handle;
 xTaskHandle elevator_move_task_handle;
+xTaskHandle elevator_door_task_handle;
 xTaskHandle motor_control_task_handle;
 
 xQueueHandle tx_queue_handle;
@@ -182,6 +184,16 @@ int main(void)
                     NULL,
                     ELEVATOR_MOVE_TASK_PRIORITY,
                     &elevator_move_task_handle
+               );
+
+    // create Elevator Door task
+    xTaskCreate(
+                    (pdTASK_CODE)elevatorDoorTask,
+                    "Elevator Door task",
+                    configMINIMAL_STACK_SIZE,
+                    NULL,
+                    ELEVATOR_DOOR_TASK_PRIORITY,
+                    &elevator_door_task_handle
                );
 
     // create Motor Control task
