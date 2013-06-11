@@ -227,6 +227,7 @@ void operate_door( void );
 void set_motor_leds( motor_led_state_t state );
 void set_estop( void );
 void clear_estop( void );
+void queue_elevator_movement_high_priority( int floor );
 void queue_elevator_movement( int floor );
 elevator_direction_t get_dir_to_dest_flr( elevator_movement_t elev );
 int get_decel_pos( elevator_movement_t elev );

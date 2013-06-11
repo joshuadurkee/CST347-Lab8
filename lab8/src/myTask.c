@@ -497,7 +497,7 @@ void set_estop( void )
 
     // send move to ground floor command in case it is needed to jump start elevatorMoveTask,
     // ok because elevator_move_queue_handle is cleared after an estop
-    queue_elevator_movement( floor );
+    queue_elevator_movement_high_priority( floor );
 }
 
 
@@ -514,6 +514,16 @@ void queue_elevator_movement( int floor )
                         (void *) &floor,
                         QUEUE_WAIT_MS
                     );
+}
+
+
+void queue_elevator_movement_high_priority( int floor )
+{
+    xQueueSendToFront(
+                        elevator_move_queue_handle,
+                        (void *) &floor,
+                        QUEUE_WAIT_MS
+                     );
 }
 
 
@@ -561,6 +571,9 @@ void elevatorMoveTask( void )
                 elevator.dest_pos = GD_FLOOR_POS;
                 elevator.stop_accel_pos = get_stop_accel_pos( elevator );
                 elevator.decel_pos = get_decel_pos( elevator );
+
+
+
             }
 
             // determine direction to destination floor
