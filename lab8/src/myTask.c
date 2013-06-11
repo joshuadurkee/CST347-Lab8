@@ -425,6 +425,9 @@ void operate_door( void )
     int wait_ms = 10;
     int i;
 
+    // clear any stale close door button presses
+    force_door_closed_flag = false;
+
     open_door();
 
     do
