@@ -582,6 +582,8 @@ void elevatorMoveTask( void )
 
         vTaskResume( motor_control_task_handle );
 
+        send_elevator_status( elevator.dest_pos, 1 );
+
         // goto the next destination
         while( elevator.cur_pos != elevator.dest_pos )
         {
@@ -611,7 +613,6 @@ void elevatorMoveTask( void )
                 set_elevator_up_down_leds( elevator.dir );
 
                 // display distance and speed status
-                send_elevator_status( elevator.dest_pos, (bool)elevator.speed );
                 send_movement_status( elevator.cur_pos, elevator.speed );
             }
 
@@ -844,7 +845,6 @@ float calc_pos( elevator_movement_t elev )
         case CONST_STATE:
             calc_pos = calc_pos_with_const_speed( elevator );
 
-            // TODO calculate speed
             // Do nothing, speed is not changing
 
             // check if beyond decel_pos
@@ -862,10 +862,9 @@ float calc_pos( elevator_movement_t elev )
             // this is here in case it is deemed necessary to uncomment later
             // ensure small errors don't cause elevator to not reach destination floor,
             // if elevator is more than 95% of DECEL_STATE, add an extra 0.5 ft
-//            if( ABS( calc_pos - elev.dest_pos ) < 0.05f * ABS( elev.dest_pos - elev.decel_pos ) )
-//                calc_pos += 0.1f * elev.dir;
+            if( ABS( calc_pos - elev.dest_pos ) < 0.05f * ABS( elev.dest_pos - elev.decel_pos ) )
+                calc_pos += 0.1f * elev.dir;
             
-            // TODO calculate speed
             if (elevator.speed > 0)
             {
                 elevator.speed -= elevator.accel * ELEVATOR_PROCESS_INTERVAL_S;
@@ -878,9 +877,3 @@ float calc_pos( elevator_movement_t elev )
 
     return calc_pos;
 }
-
-
-//float calc_velocity( float acceleration, float time, float previous_velocity )
-//{
-//    return ( acceleration * time ) + previous_velocity;
-//}
